@@ -103,7 +103,13 @@ public class UtilityCommands : InteractionModuleBase
         string desc = "";
         foreach (var warn in warns)
         {
-            desc = desc + $"<@{warn.warner}> : {warn.warnReason}\n";
+            string warntext = warn.warnReason;
+            if (warntext.Length > 250)
+            {
+                warntext = warntext.Substring(0, 240);
+            }
+            
+            desc = desc + $"<@{warn.warner}> : {warntext}\n";
         }
         embed.WithDescription(desc);
         embed.WithFooter($"{warns.Count} warnings");
