@@ -157,6 +157,15 @@ public class Sentinel
 
         await _discord.LoginAsync(TokenType.Bot, _config.DiscordToken);
         await _discord.StartAsync();
+        
+        //create New Message handler
+        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random);
+        
+        //Hook remaining events
+        HookEvents();
+        
+        //start ticking
+        StartTicking();
     }
 
     private void LoadModules()
@@ -202,11 +211,9 @@ public class Sentinel
 
     private async Task Init()
     {
+        Console.WriteLine("Initialising");
         //setup interaction service
         _interactions = new InteractionService(_discord);
-
-        //create New Message handler
-        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random);
         
         //setup dependency inj.
         var srv = new ServiceCollection();
@@ -235,7 +242,13 @@ public class Sentinel
         {
             await _interactions.RegisterCommandsToGuildAsync(server);
         }
+        
+        //set status
+        await _discord.SetGameAsync(_config.GetStatus(), type: ActivityType.Playing);
+    }
 
+    private void HookEvents()
+    {
         //hook events for SentinelEvents
         _discord.MessageReceived += Events.MessageCreate;
         _discord.MessageDeleted += Events.MessageRemove;
@@ -253,13 +266,6 @@ public class Sentinel
         _discord.Connected += Reconnect;
         _discord.UserJoined += NewMember;
         _discord.ReactionRemoved += DelReact;
-
-        //set status
-        await _discord.SetGameAsync(_config.GetStatus(), type: ActivityType.Playing);
-
-        //start ticking
-        StartTicking();
-        return;
     }
 
     private async Task NewMember(SocketGuildUser arg)
