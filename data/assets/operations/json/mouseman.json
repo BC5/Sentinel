@@ -1,0 +1,55 @@
+{
+  "Name": "mouseman",
+  "InitialAsset": "operations:mouseman",
+  "InitialAssetType": "Gif",
+  "ArgumentAssigment": {
+    "0": 0,
+    "1": 1
+  },
+  "Operations": [
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 60,
+        "TextBounds": [
+          20,
+          5,
+          260,
+          50
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Impact",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FFFFFFFF",
+        "TextRotation": 0.0,
+        "AllFrames" : false,
+        "FirstFrame": 0,
+        "LastFrame": 20
+      }
+    },
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 60,
+        "TextBounds": [
+          20,
+          5,
+          260,
+          50
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Impact",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FFFFFFFF",
+        "TextRotation": 0.0,
+        "AllFrames" : false,
+        "FirstFrame": 21,
+        "LastFrame": 54
+      }
+    }
+  ]
+}

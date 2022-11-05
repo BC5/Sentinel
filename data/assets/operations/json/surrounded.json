@@ -1,0 +1,48 @@
+{
+  "Name": "surrounded",
+  "InitialAsset": "operations:surrounded",
+  "ArgumentAssigment": {
+    "0": 0,
+    "1": 1
+  },
+  "Operations": [
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 80,
+        "TextBounds": [
+          230,
+          660,
+          690,
+          790
+        ],
+        "TextGravity": 0,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    },
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 100,
+        "TextBounds": [
+          810,
+          65,
+          1400,
+          345
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    }
+  ]
+}

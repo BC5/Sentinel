@@ -1,0 +1,88 @@
+{
+  "Name": "business",
+  "InitialAsset": "operations:business",
+  "ArgumentAssigment": {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3
+  },
+  "Operations": [
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 20,
+        "TextBounds": [
+          155,
+          7,
+          452,
+          54
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    },
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 20,
+        "TextBounds": [
+          22,
+          247,
+          125,
+          277
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    },
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 20,
+        "TextBounds": [
+          150,
+          255,
+          260,
+          283
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#99FFFFFF",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    },
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 20,
+        "TextBounds": [
+          301,
+          257,
+          444,
+          303
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "Arial",
+        "BackgroundColour": "#00000000",
+        "TextColor": "#FF000000",
+        "TextRotation": 0.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Discord.Net" Version="3.8.1" />
+      <PackageReference Include="FFMpegCore" Version="4.8.0" />
+      <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="12.2.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0-rc.2.22472.11" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0-rc.2.22472.11">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0-rc.2.22472.3" />
+      <PackageReference Include="Tesseract" Version="4.1.1" />
+      <PackageReference Include="Topten.RichTextKit" Version="0.4.163-preview" />
+      <PackageReference Include="VideoLibrary" Version="3.2.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="data\assets" />
+      <Folder Include="data\recording" />
+      <Folder Include="data\temp" />
+      <Folder Include="Migrations" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="data\assets\operations\gifs\mouseman.gif" />
+      <Content Include="data\assets\operations\images\business.png" />
+      <Content Include="data\assets\operations\images\juvesus.png" />
+      <Content Include="data\assets\operations\images\juvesus_test.png" />
+      <Content Include="data\assets\operations\images\nut.png" />
+      <Content Include="data\assets\operations\images\scanlines.png" />
+      <Content Include="data\assets\operations\images\surrounded.png" />
+      <Content Include="data\assets\operations\images\surrounded_test.png" />
+      <Content Include="data\assets\operations\images\tonty.png" />
+    </ItemGroup>
+
+</Project>

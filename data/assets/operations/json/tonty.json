@@ -1,0 +1,49 @@
+{
+  "Name": "tonty",
+  "InitialAsset": "operations:tonty",
+  "ArgumentAssigment": {
+    "0": 0
+  },
+  "Operations": [
+    {
+      "Operation": "TextOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.TextOperation, Sentinel",
+        "FontSize": 60,
+        "TextBounds": [
+          140,
+          100,
+          550,
+          160
+        ],
+        "TextGravity": 5,
+        "TextContent": "null",
+        "FontFamily": "VCR OSD Mono",
+        "BackgroundColour": "#FF000000",
+        "TextColor": "#FFFFFFFF",
+        "TextRotation": 0.0
+      }
+    },
+    {
+      "Operation": "AberrationOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.AberrationOperation, Sentinel",
+        "RedNudge" : [3,2],
+        "GreenNudge": [2,1]
+      }
+    },
+    {
+      "Operation": "NoiseOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.NoiseOperation, Sentinel"
+      }
+    },
+    {
+      "Operation": "OverlayOperation",
+      "Parameters": {
+        "$type": "Sentinel.ImageProcessing.Operations.OverlayOperation, Sentinel",
+        "Scale": 2
+      }
+    }
+  ]
+}

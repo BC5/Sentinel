@@ -1,0 +1,11 @@
+﻿/data/*.sqlite
+/data/*.sqlite-shm
+/data/*.sqlite-wal
+/data/*.json
+/sentinel.json
+/bin/
+/.idea/
+/obj/
+/Sentinel.sln.DotSettings.user
+/data/procedures/
+/data/plugins
