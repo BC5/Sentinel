@@ -35,7 +35,8 @@ public class Sentinel
     private Random _random;
     private Regexes _regexes;
     private NewMessageHandler _newMessageHandler;
-    
+    private TwitterManager _twitter;
+
     private ulong _ticks = 0;
 
     private List<ISentinelModule> _modules;
@@ -154,6 +155,8 @@ public class Sentinel
         _automod = new AutoMod(this,_discord);
         //setup detention
         _detention = new Detention(this, _discord);
+        //setup twitter
+        _twitter = new TwitterManager(this);
 
         await _discord.LoginAsync(TokenType.Bot, _config.DiscordToken);
         await _discord.StartAsync();
@@ -223,6 +226,8 @@ public class Sentinel
         srv.AddSingleton(_ocr);
         srv.AddSingleton(_detention);
         srv.AddSingleton(_procScheduler);
+        srv.AddSingleton(_twitter);
+        srv.AddSingleton(_regexes);
         _services = srv.BuildServiceProvider();
         
         //add commands
@@ -563,6 +568,48 @@ public class Sentinel
         if (!react.Message.IsSpecified) msg = await react.Channel.GetMessageAsync(react.MessageId);
         else msg = react.Message.Value;
         await data.AddReact(react,msg);
+        
+        //twitter thread thing
+        Task.Run(async () => { await TwitterThread(react, msg); });
+    }
+
+    private async Task TwitterThread(SocketReaction react, IMessage msg)
+    {
+        if (react.Emote.Name == "🧵")
+        {
+            foreach (var reactentry in msg.Reactions)
+            {
+                if (!(reactentry.Value.IsMe && reactentry.Key.Name == "🧵"))
+                {
+                    var match = _regexes.TwitterId.Match(msg.Content);
+                    if (match.Success)
+                    {
+                        Console.WriteLine("ID: " + match.Groups[1].Value);
+                        var thread = await _twitter.GetThread(long.Parse(match.Groups[1].Value));
+                        await msg.AddReactionAsync(new Emoji("🧵"));
+                        List<Embed>? embeds = await _twitter.ThreadEmbed(thread);
+                        if (embeds != null)
+                        {
+                            embeds.Reverse();
+                            if (embeds.Count > 10)
+                            {
+                                while (embeds.Count > 10)
+                                {
+                                    embeds.Remove(embeds[0]);
+                                }
+                                await ((IUserMessage) msg).ReplyAsync("Last 10 Tweets Only",embeds: embeds.ToArray());
+                            }
+                            else
+                            {
+                                await ((IUserMessage) msg).ReplyAsync(embeds: embeds.ToArray());
+                            }
+                            //Get rid of embed
+                            await msg.Channel.ModifyMessageAsync(msg.Id, m => m.Flags = (msg.Flags | MessageFlags.SuppressEmbeds));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private async Task InteractionCreated(SocketInteraction i)
@@ -589,11 +636,13 @@ public class Sentinel
     {
         public Regex NewIdiot;
         public Regex AddDays;
+        public Regex TwitterId;
         
         public Regexes()
         {
             NewIdiot = new Regex(@"new <@&(\d+)>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             AddDays = new Regex(@"<@!?(\d+)> add (\d+) days?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            TwitterId = new Regex(@":\/\/twitter.com\/.+\/status\/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
     }
     

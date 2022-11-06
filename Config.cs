@@ -10,6 +10,10 @@ namespace Sentinel;
 public class Config
 {
     public string DiscordToken { get; set; } = "N/A";
+    public string TwitterAPIKey { get; set; } = "";
+    public string TwitterAPISecret { get; set; } = "";
+    public string TwitterAPIToken { get; set; } = "";
+    
     public ulong[] AdminUsers { get; set; } = Array.Empty<ulong>();
     public bool GlobalMode { get; set; } = false;
     public ulong[] Servers { get; set; } = Array.Empty<ulong>();
