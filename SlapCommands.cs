@@ -213,6 +213,13 @@ public class SlapCommands : InteractionModuleBase
 
     }
 
+
+    [SlashCommand("shutup",description:"Mute someone for 5 minutes")]
+    public async Task ShutUpSlashCommand(IGuildUser target)
+    {
+        await ShutUp(target);
+    }
+    
     [UserCommand("Shut Up")]
     public async Task ShutUp(IGuildUser target)
     {
