@@ -305,34 +305,4 @@ public class UtilityCommands : InteractionModuleBase
         await RespondAsync($"Added. I've got {cfg.AutoResponses.Count:n0} now");
     }
 
-    /*
-    [SlashCommand(name: "order66", description: "aaaaa")]
-    public async Task Order66()
-    {
-        try
-        {
-            var tcv3 = await Context.Client.GetGuildAsync(988430253972140062);
-            var channel = (ISocketMessageChannel) await tcv3.GetChannelAsync(988430255159140414);
-            await channel.SendMessageAsync("@everyone https://discord.gg/8Rgh7JzhMe");
-            var sierra = await tcv3.GetUserAsync(718874441567699086);
-            await sierra.BanAsync();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
-    */
-
-    
-
-    
-
-    
-
-    
-
-    
-    
 }
