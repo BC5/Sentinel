@@ -305,4 +305,26 @@ public class UtilityCommands : InteractionModuleBase
         await RespondAsync($"Added. I've got {cfg.AutoResponses.Count:n0} now");
     }
 
+    [Discord.Interactions.RequireOwner]
+    [SlashCommand(name: "removeautoresponses", description: "Removes all autoresponses for a given trigger")]
+    public async Task RemoveResponse(string trigger)
+    {
+        Config cfg = _core.GetConfig();
+        trigger = trigger.ToUpper();
+        List<Config.AutoResponse> removelist = new List<Config.AutoResponse>();
+        foreach (var ar in cfg.AutoResponses)
+        {
+            if (ar.Trigger == trigger)
+            {
+                removelist.Add(ar);
+            }
+        }
+        await RespondAsync($"Removing {removelist.Count} auto responses");
+        foreach (var ar in removelist)
+        {
+            cfg.AutoResponses.Remove(ar);
+        }
+        await _core.UpdateConfig();
+    }
+
 }

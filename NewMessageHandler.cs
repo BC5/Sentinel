@@ -155,6 +155,8 @@ public class NewMessageHandler
 
     private async Task AutoResponses(SocketMessage msg)
     {
+        if(msg.Author.IsBot) return;
+
         List<Task<bool>> checks = new();
         if (msg is IUserMessage msg3)
         {
