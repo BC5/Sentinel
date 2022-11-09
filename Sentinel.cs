@@ -271,6 +271,25 @@ public class Sentinel
         _discord.Connected += Reconnect;
         _discord.UserJoined += NewMember;
         _discord.ReactionRemoved += DelReact;
+        _discord.UserIsTyping += Typing;
+    }
+
+    private async Task Typing(Cacheable<IUser, ulong> u, Cacheable<IMessageChannel, ulong> c)
+    {
+        IUser user = await u.GetOrDownloadAsync();
+        IMessageChannel channel = await c.GetOrDownloadAsync();
+
+        if (user.Id == 238735198827708416 && channel.Id == 1019326857193205770 && user is SocketGuildUser sgu)
+        {
+            if (_random.Next(250) == 69)
+            {
+                await sgu.SetTimeOutAsync(TimeSpan.FromSeconds(30));
+                EmbedBuilder eb = new EmbedBuilder();
+                eb.WithDescription($"✅ {sgu.Mention} **was muted** | I felt like it");
+                eb.WithColor(Color.Green);
+                await channel.SendMessageAsync(embed: eb.Build());
+            }
+        }
     }
 
     private async Task NewMember(SocketGuildUser arg)
