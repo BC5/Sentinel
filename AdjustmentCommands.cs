@@ -194,6 +194,16 @@ public class AdjustmentCommands : InteractionModuleBase
         await data.SaveChangesAsync();
     }
 
+    [SlashCommand(name: "attitude", description: "Set attitude Sentinel will take to a user")]
+    public async Task SetAttitude(IGuildUser user, ServerUser.Attitude attitude)
+    {
+        var data = _core.GetDbContext();
+        ServerUser usr = await data.GetServerUser(user);
+        usr.SentinelAttitude = attitude;
+        await RespondAsync($"I'll now treat {user.Mention} {attitude}");
+        await data.SaveChangesAsync();
+    }
+
 
 
 }

@@ -222,13 +222,20 @@ public class ServerUser
     public bool Immune { get; set; } = false;
     public string RoleBackup { get; set; } = "";
     public DateTime? IdiotedUntil { get; set; }
-    
     public DateTime? DeflectorExpiry { get; set; }
+    public Attitude SentinelAttitude { get; set; } = Attitude.Neutral;
 
     public bool ValidDeflector()
     {
         if (DeflectorExpiry == null) return false;
         return DeflectorExpiry.Value > DateTime.Now;
+    }
+
+    public enum Attitude
+    {
+        Neutral,
+        Friendly,
+        Belligerent 
     }
     
 }
