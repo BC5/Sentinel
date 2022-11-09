@@ -20,6 +20,7 @@ public class Config
     public string[] Statuses { get; set; } = Array.Empty<string>();
     public List<FactCheck> FactChecks { get; set; } = new();
     public List<string> Quotes { get; set; } = new();
+    public List<string> BelligerentResponses { get; set; } = new();
     public string DataDirectory { get; set; } = @".\data";
     public List<AutoResponse> AutoResponses { get; set; } = new();
     public List<ProcedureScheduler.ScheduledProcedure> ProcedureSchedule { get; set; } = new();
@@ -33,6 +34,11 @@ public class Config
     public string GetQuote()
     {
         return Quotes[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
+    }
+    
+    public string GetBelligerentResponse()
+    {
+        return BelligerentResponses[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
     }
 
     public async Task<string> QuoteProcess(string quote, SocketGuildUser sender, ServerUser susender, Detention detention, ServerConfig sconf, Data data)

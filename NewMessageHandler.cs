@@ -57,6 +57,9 @@ public class NewMessageHandler
 
         //Do autoresponses
         await AutoResponses(msg);
+        
+        //Attitude
+        await Attitude(msg, user.SentinelAttitude);
 
         //AntiChristmas
         await AntiChristmas(msg);
@@ -74,6 +77,17 @@ public class NewMessageHandler
     {
         //OCR
         _ocr.EnqueueMessage(msg);
+    }
+
+    public async Task Attitude(SocketMessage msg, ServerUser.Attitude attitude)
+    {
+        if (attitude == ServerUser.Attitude.Belligerent)
+        {
+            if (_random.Next(100) == 20 && msg is IUserMessage um)
+            {
+                await um.ReplyAsync(_config.GetBelligerentResponse());
+            }
+        }
     }
 
     public async Task AntiChristmas(SocketMessage msg)
