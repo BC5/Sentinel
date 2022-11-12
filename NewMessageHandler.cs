@@ -83,7 +83,7 @@ public class NewMessageHandler
     {
         if (attitude == ServerUser.Attitude.Belligerent)
         {
-            if (_random.Next(100) == 20 && msg is IUserMessage um)
+            if (_random.Next(50) == 20 && msg is IUserMessage um)
             {
                 await um.ReplyAsync(_config.GetBelligerentResponse());
             }

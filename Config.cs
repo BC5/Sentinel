@@ -38,7 +38,7 @@ public class Config
     
     public string GetBelligerentResponse()
     {
-        return BelligerentResponses[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
+        return BelligerentResponses[RandomNumberGenerator.GetInt32(0, BelligerentResponses.Count)];
     }
 
     public async Task<string> QuoteProcess(string quote, SocketGuildUser sender, ServerUser susender, Detention detention, ServerConfig sconf, Data data)

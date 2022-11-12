@@ -286,7 +286,7 @@ public class Sentinel
 
             if (su.SentinelAttitude == ServerUser.Attitude.Belligerent)
             {
-                if (_random.Next(100) == 69)
+                if (_random.Next(75) == 69)
                 {
                     await sgu.SetTimeOutAsync(TimeSpan.FromSeconds(30));
                     EmbedBuilder eb = new EmbedBuilder();
