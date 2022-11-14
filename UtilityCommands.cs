@@ -183,7 +183,7 @@ public class UtilityCommands : InteractionModuleBase
 
         await RespondAsync("Something went wrong.", ephemeral: true);
     }
-    
+
     /*
     [SlashCommand(name: "topmessages", description: "See top 5 messages with given emote reacts")]
     public async Task TopMessages()

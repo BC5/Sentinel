@@ -36,6 +36,7 @@ public class Sentinel
     private Regexes _regexes;
     private NewMessageHandler _newMessageHandler;
     private TwitterManager _twitter;
+    private MassDeleter _deleter;
 
     private ulong _ticks = 0;
 
@@ -157,6 +158,8 @@ public class Sentinel
         _detention = new Detention(this, _discord);
         //setup twitter
         _twitter = new TwitterManager(this);
+        //deleter
+        _deleter = new MassDeleter(_discord);
 
         await _discord.LoginAsync(TokenType.Bot, _config.DiscordToken);
         await _discord.StartAsync();
@@ -228,6 +231,7 @@ public class Sentinel
         srv.AddSingleton(_procScheduler);
         srv.AddSingleton(_twitter);
         srv.AddSingleton(_regexes);
+        srv.AddSingleton(_deleter);
         _services = srv.BuildServiceProvider();
         
         //add commands
@@ -240,6 +244,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(OperationCommand), _services);
         await _interactions.AddModuleAsync(typeof(EconomyCommands), _services);
         await _interactions.AddModuleAsync(typeof(AdjustmentCommands), _services);
+        await _interactions.AddModuleAsync(typeof(WipeCommands), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //reg commands
@@ -480,10 +485,15 @@ public class Sentinel
         {
             _detention.Tick();
         }
+
+        //Every 5 seconds
+        if (_ticks % 5 == 3)
+        {
+            await _deleter.Delete();
+        }
         
         //Every second
         await _ocr.TryNext();
-        
     }
     
 
