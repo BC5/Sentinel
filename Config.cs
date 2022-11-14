@@ -118,41 +118,45 @@ public class Config
         public string? TextResponse { get; set; }
         public string? EmoteResponse { get; set; }
 
-        public async Task<bool> Check(IUserMessage msg, string msgcontent, Config cfg)
+        public async Task<AutoResponse?> Check(IUserMessage msg)
         {
             if (UserTarget != null)
             {
-                if (UserTarget.Value != msg.Author.Id) return false;
+                if (UserTarget.Value != msg.Author.Id) return null;
             }
             
             if (Match(msg.Content))
             {
-                if (TextResponse != null)
-                {
-                    if (TextResponse == "RANDOMQUOTE")
-                    {
-                        await msg.ReplyAsync(cfg.GetQuote());
-                    }
-                    else
-                    {
-                        await msg.ReplyAsync(TextResponse);
-                    }
-                }
-                if (EmoteResponse != null)
-                {
-                    if (Emoji.TryParse(EmoteResponse, out var emoji))
-                    {
-                        await msg.AddReactionAsync(emoji);
-                    }
-                    else if (Emote.TryParse(EmoteResponse, out var emote))
-                    {
-                        await msg.AddReactionAsync(emote);
-                    }
-                    
-                }
-                return true;
+                return this;
             }
-            return false;
+            return null;
+        }
+
+        public async Task Action(IUserMessage msg, Config cfg)
+        {
+            if (TextResponse != null)
+            {
+                if (TextResponse == "RANDOMQUOTE")
+                {
+                    await msg.ReplyAsync(cfg.GetQuote());
+                }
+                else
+                {
+                    await msg.ReplyAsync(TextResponse);
+                }
+            }
+            if (EmoteResponse != null)
+            {
+                if (Emoji.TryParse(EmoteResponse, out var emoji))
+                {
+                    await msg.AddReactionAsync(emoji);
+                }
+                else if (Emote.TryParse(EmoteResponse, out var emote))
+                {
+                    await msg.AddReactionAsync(emote);
+                }
+                    
+            }
         }
         
         public bool Match(string input)

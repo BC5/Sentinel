@@ -171,16 +171,26 @@ public class NewMessageHandler
     {
         if(msg.Author.IsBot) return;
 
-        List<Task<bool>> checks = new();
+        List<Task<Config.AutoResponse?>> checks = new();
         if (msg is IUserMessage msg3)
         {
             string mcont = msg.Content.ToUpper();
             foreach (var ar in _config.AutoResponses)
             {
-                checks.Add(ar.Check(msg3,mcont,_config));
+                checks.Add(ar.Check(msg3));
+            }
+            await Task.WhenAll(checks);
+            int actioned = 0;
+            foreach (var task in checks)
+            {
+                if (task.Result != null)
+                {
+                    actioned++;
+                    await task.Result.Action(msg3,_config);
+                    if(actioned >= 2) return;
+                }
             }
         }
-        await Task.WhenAll(checks);
     }
 
     private async Task Censor(SocketMessage msg, ServerUser user, ServerConfig srv)
