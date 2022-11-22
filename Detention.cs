@@ -48,7 +48,21 @@ public class Detention
     public async Task Idiot(IGuildUser gu, ServerUser su, ulong idiotRole)
     {
         List<ulong> rolelist = gu.RoleIds.ToList();
+        
+        //Get server IRoles to reference against user's Role IDs
+        Dictionary<ulong, IRole> serverroles = new Dictionary<ulong, IRole>();
+        foreach (var r in gu.Guild.Roles)
+        {
+            serverroles.Add(r.Id,r);
+        }
+
+        //Ignore all managed roles
+        List<ulong> managed = new List<ulong>();
+        foreach (var r in rolelist) if (serverroles[r].IsManaged) managed.Add(r);
+        foreach (ulong m in managed) rolelist.Remove(m);
+        //Ignore @everyone
         rolelist.Remove(gu.GuildId);
+
         ulong[] roles = rolelist.ToArray();
         su.RoleBackup = SerialiseRoles(roles);
         if (roles.Length > 0)
