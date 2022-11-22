@@ -51,7 +51,15 @@ public class SentinelEvents
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                if (e is NullReferenceException nre)
+                {
+                    Console.WriteLine($"NullReference: {nre.InnerException}");
+                }
+                else
+                {
+                    Console.WriteLine(e);
+                }
+                
             }
             await db.SaveChangesAsync();
         }

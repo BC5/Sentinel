@@ -165,6 +165,13 @@ public class UtilityCommands : InteractionModuleBase
         if (msg is IUserMessage msg2)
         {
             await RespondAsync("✅",ephemeral:true);
+
+            if (msg.Channel.Id == 1021889219209211904)
+            {
+                await msg2.ReplyAsync("**VÉRIFIÉ PAR DE VRAIS PATRIOTES FRANÇAIS:** JE ME RENDS");
+                return;
+            }
+            
             Config cfg = _core.GetConfig();
             Config.FactCheck fc = cfg.GetFactcheck(seed);
             

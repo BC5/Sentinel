@@ -37,6 +37,7 @@ public class Sentinel
     private NewMessageHandler _newMessageHandler;
     private TwitterManager _twitter;
     private MassDeleter _deleter;
+    private TextCat _textcat;
 
     private ulong _ticks = 0;
 
@@ -107,6 +108,7 @@ public class Sentinel
         _config = conf;
         _procScheduler = new ProcedureScheduler(this,_config);
         _modules = new();
+        _textcat = new(@$"{conf.DataDirectory}\ntextcat\languagemodel.xml");
         try
         {
             var tempdata = new Data($@"{conf.DataDirectory}\data.sqlite");
@@ -165,7 +167,7 @@ public class Sentinel
         await _discord.StartAsync();
         
         //create New Message handler
-        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random);
+        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random, _textcat);
         
         //Hook remaining events
         HookEvents();
@@ -232,6 +234,7 @@ public class Sentinel
         srv.AddSingleton(_twitter);
         srv.AddSingleton(_regexes);
         srv.AddSingleton(_deleter);
+        srv.AddSingleton(_textcat);
         _services = srv.BuildServiceProvider();
         
         //add commands

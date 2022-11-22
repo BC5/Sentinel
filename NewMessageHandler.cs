@@ -14,9 +14,10 @@ public class NewMessageHandler
     private Detention _detention;
     private Config _config;
     private Random _random;
+    private TextCat _textcat;
 
     public NewMessageHandler(DiscordSocketClient discord, Sentinel core, OCRManager ocr, Sentinel.Regexes regex,
-        Detention detention, Config conf, Random rand)
+        Detention detention, Config conf, Random rand, TextCat textcat)
     {
         _discord = discord;
         _core = core;
@@ -25,6 +26,7 @@ public class NewMessageHandler
         _detention = detention;
         _config = conf;
         _random = rand;
+        _textcat = textcat;
     }
     
     public async Task NewMessage(SocketMessage msg)
@@ -69,7 +71,10 @@ public class NewMessageHandler
         
         //Apply censor
         await Censor(msg, user, srv);
-
+        
+        //Apply Frenchification
+        await Francais(msg, user);
+        
         await data.SaveChangesAsync();
     }
 
@@ -148,6 +153,26 @@ public class NewMessageHandler
         return false;
     }
 
+    private async Task Francais(SocketMessage msg, ServerUser user)
+    {
+        if(msg.Channel.Id != 1021889219209211904) return;
+
+        if(msg.Content == "") return;
+        
+        if (!_textcat.IsFrench(msg.Content) && msg is SocketUserMessage umsg)
+        {
+            var msgs = msg.Channel.GetCachedMessages(msg, Direction.Before, 1);
+            bool reply = true;
+            if (msgs != null && msgs.Count > 0)
+            {
+                var previous = msgs.First();
+                if (previous != null && previous.Content == "Parlez Français. C’est obligatoire") reply = false;
+            }
+            if(reply) await umsg.ReplyAsync("Parlez Français. C’est obligatoire");
+            await msg.DeleteAsync();
+        }
+    }
+    
     private async Task RandomQuote(SocketMessage msg, SocketGuildUser sgu, ServerUser user, ServerConfig srv, Data data)
     {
         foreach (var mention in msg.MentionedUsers)

@@ -17,6 +17,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0-rc.2.22472.3" />
+      <PackageReference Include="NTextCat" Version="0.3.65" />
       <PackageReference Include="Tesseract" Version="4.1.1" />
       <PackageReference Include="Topten.RichTextKit" Version="0.4.163-preview" />
       <PackageReference Include="TweetinviAPI" Version="5.0.4" />
