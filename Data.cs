@@ -220,6 +220,7 @@ public class ServerUser
     public bool Authoritative { get; set; } = false;
     public bool Censored { get; set; } = false;
     public bool Immune { get; set; } = false;
+    public bool Francophone { get; set; } = false;
     public string RoleBackup { get; set; } = "";
     public DateTime? IdiotedUntil { get; set; }
     public DateTime? DeflectorExpiry { get; set; }
@@ -294,6 +295,7 @@ public class ServerConfig
     public int Cost1984 { get; set; } = 250;
     public int CostDe1984 { get; set; } = 100;
     public int CostWarn { get; set; } = 50;
+    public int FrenchCost { get; set; } = 250;
     public float RewardChance { get; set; } = 0.10f;
     public int RewardSize { get; set; } = 5;
     public bool FunnyCommands { get; set; } = false;

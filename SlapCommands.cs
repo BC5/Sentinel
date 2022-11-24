@@ -219,6 +219,56 @@ public class SlapCommands : InteractionModuleBase
     {
         await ShutUp(target);
     }
+
+    [SlashCommand("francophone",description:"Parlez Français. C’est obligatoire.")]
+    public async Task Francophone(IGuildUser target)
+    {
+        await DeferAsync();
+        var data = _core.GetDbContext();
+        ServerUser u = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser t = await data.GetServerUser(target.Id, Context.Guild.Id);
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+
+        if (t.Immune)
+        {
+            await RespondAsync($"{target.Mention} is immune (no fun allowed)");
+            return;
+        }
+        
+        if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
+        
+        if (u.Balance < srv.FrenchCost)
+        {
+            await FollowupAsync($"You don't have the £{srv.FrenchCost:n0} required for that");
+            return;
+        }
+
+        await data.Transact(u, null, srv.FrenchCost, Transaction.TxnType.Purchase);
+                    
+        if (t.ValidDeflector())
+        {
+            t.DeflectorExpiry = null;
+            u.Francophone = !u.Francophone;
+            if(u.Francophone)
+            {
+                await FollowupAsync(
+                $"<@{u.UserSnowflake}> parle vous français? Parce que tu dois parler français. ({target.Mention} avait un déflecteur)");
+            }
+            else
+            {
+                await FollowupAsync($"no more frogspeak for <@{u.UserSnowflake}>. this burnt a deflector. i couldn't be bothered to code it so it doesn't. cope {target.Mention}.");
+            }
+        }
+        else
+        {
+            t.Francophone = !t.Francophone;
+            if (t.Francophone) await FollowupAsync($"<@{u.UserSnowflake}> parle vous français? Parce que tu dois parler français.");
+            else await FollowupAsync($"<@{u.UserSnowflake}> no more frogspeak 🥳");
+        }
+
+        await data.SaveChangesAsync();
+
+    }
     
     [UserCommand("Shut Up")]
     public async Task ShutUp(IGuildUser target)

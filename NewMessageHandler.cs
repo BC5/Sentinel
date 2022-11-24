@@ -155,7 +155,7 @@ public class NewMessageHandler
 
     private async Task Francais(SocketMessage msg, ServerUser user)
     {
-        if(msg.Channel.Id != 1021889219209211904) return;
+        if(msg.Channel.Id != 1021889219209211904 && !user.Francophone) return;
 
         if(msg.Content == "") return;
         

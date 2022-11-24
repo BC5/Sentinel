@@ -65,6 +65,16 @@ public class AdjustmentCommands : InteractionModuleBase
         await data.SaveChangesAsync();
     }
     
+    [SlashCommand("frenchcost","Change cost of making someone speak french")]
+    public async Task FrenchCost(int cost)
+    {
+        var data = _core.GetDbContext();
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        srv.FrenchCost = cost;
+        await RespondAsync($"French Cost is now £{cost:n0}");
+        await data.SaveChangesAsync();
+    }
+    
     [SlashCommand("1984cost","Change cost of applying censor")]
     public async Task Cost1984(int cost)
     {

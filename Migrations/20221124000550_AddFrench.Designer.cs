@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sentinel;
 
@@ -10,9 +11,11 @@ using Sentinel;
 namespace Sentinel.Migrations
 {
     [DbContext(typeof(Data))]
-    partial class DataModelSnapshot : ModelSnapshot
+    [Migration("20221124000550_AddFrench")]
+    partial class AddFrench
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.0-rc.2.22472.11");
