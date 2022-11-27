@@ -262,8 +262,8 @@ public class SlapCommands : InteractionModuleBase
         else
         {
             t.Francophone = !t.Francophone;
-            if (t.Francophone) await FollowupAsync($"<@{u.UserSnowflake}> parle vous français? Parce que tu dois parler français.");
-            else await FollowupAsync($"<@{u.UserSnowflake}> no more frogspeak 🥳");
+            if (t.Francophone) await FollowupAsync($"<@{t.UserSnowflake}> parle vous français? Parce que tu dois parler français.");
+            else await FollowupAsync($"<@{t.UserSnowflake}> no more frogspeak 🥳");
         }
 
         await data.SaveChangesAsync();
