@@ -67,7 +67,11 @@ public class NewMessageHandler
         await AntiChristmas(msg);
         
         //No bot messages past this point
-        if(msg.Author.IsBot) return;
+        if (msg.Author.IsBot)
+        {
+            await data.SaveChangesAsync();
+            return;
+        }
         
         //Apply censor
         await Censor(msg, user, srv);
