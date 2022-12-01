@@ -26,16 +26,17 @@ public class TwitterManager
 
     public async Task<List<Embed>?> ThreadEmbed(List<TweetV2Response> thread)
     {
+        Dictionary<string, UserV2> authors = new();
         var author = await _client.UsersV2.GetUserByIdAsync(thread[0].Tweet.AuthorId);
         List<Embed> embeds = new List<Embed>();
         foreach (var tweet in thread)
         {
-            if (tweet.Tweet.AuthorId != author.User.Id)
+            if (!authors.ContainsKey(tweet.Tweet.AuthorId))
             {
-                Console.WriteLine("Mismatched author");
-                return null;
+                authors.Add(tweet.Tweet.AuthorId, (await _client.UsersV2.GetUserByIdAsync(tweet.Tweet.AuthorId)).User);
             }
-            embeds.Add(TweetEmbed(tweet,author.User));
+            
+            embeds.Add(TweetEmbed(tweet,authors[tweet.Tweet.AuthorId]));
         }
         return embeds;
     }
