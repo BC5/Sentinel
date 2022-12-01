@@ -64,7 +64,7 @@ public class NewMessageHandler
         await Attitude(msg, user.SentinelAttitude);
 
         //AntiChristmas
-        await AntiChristmas(msg);
+        //await AntiChristmas(msg);
         
         //No bot messages past this point
         if (msg.Author.IsBot)
