@@ -59,7 +59,7 @@ public class UtilityCommands : InteractionModuleBase
 
         proc = proc.ToUpper();
         await DeferAsync();
-        string procpath = $@"{_core.GetConfig().DataDirectory}\procedures\{proc}.xml";
+        string procpath = $@"{_core.GetConfig().DataDirectory}/procedures/{proc}.xml";
         if (!File.Exists(procpath))
         {
             await FollowupAsync($"Could not find `PROCEDURE-{proc}`");

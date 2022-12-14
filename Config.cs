@@ -21,7 +21,7 @@ public class Config
     public List<FactCheck> FactChecks { get; set; } = new();
     public List<string> Quotes { get; set; } = new();
     public List<string> BelligerentResponses { get; set; } = new();
-    public string DataDirectory { get; set; } = @".\data";
+    public string DataDirectory { get; set; } = @"./data";
     public List<AutoResponse> AutoResponses { get; set; } = new();
     public List<ProcedureScheduler.ScheduledProcedure> ProcedureSchedule { get; set; } = new();
 

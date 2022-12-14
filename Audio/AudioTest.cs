@@ -8,13 +8,13 @@ public class AudioTest
 {
     private IAudioClient _client;
     private Dictionary<ulong, AudioInStream> _streams;
-    private string _savePath = @"..\..\..\data\recording";
+    private string _savePath = @"../../../data/recording";
     private int _tick = 0;
     private string _sessionName;
     public AudioTest(IAudioClient client, ulong server)
     {
         _sessionName = $"{DateTimeOffset.Now:yyyy-MM-dd HH.mm} [{server}]";
-        Directory.CreateDirectory($@"{_savePath}\{_sessionName}");
+        Directory.CreateDirectory($@"{_savePath}/{_sessionName}");
         
         _client = client;
         _streams = new();

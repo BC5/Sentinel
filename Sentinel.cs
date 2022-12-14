@@ -50,9 +50,9 @@ public class Sentinel
     public static async Task Main()
     {
         //Execution dir
-        string config1 = @".\sentinel.json";
+        string config1 = @"./sentinel.json";
         //Project dir (when working in Rider at least)
-        string config2 = @"..\..\..\sentinel.json";
+        string config2 = @"../../../sentinel.json";
 
         bool c1Exists = File.Exists(config1);
         bool c2Exists = File.Exists(config2);
@@ -93,7 +93,7 @@ public class Sentinel
 
     public Data GetDbContext()
     {
-        return new Data($@"{_config.DataDirectory}\data.sqlite");;
+        return new Data($@"{_config.DataDirectory}/data.sqlite");;
     }
 
     public static async Task WriteConfig(Config conf, string file)
@@ -108,10 +108,10 @@ public class Sentinel
         _config = conf;
         _procScheduler = new ProcedureScheduler(this,_config);
         _modules = new();
-        _textcat = new(@$"{conf.DataDirectory}\ntextcat\languagemodel.xml");
+        _textcat = new(@$"{conf.DataDirectory}/ntextcat/languagemodel.xml");
         try
         {
-            var tempdata = new Data($@"{conf.DataDirectory}\data.sqlite");
+            var tempdata = new Data($@"{conf.DataDirectory}/data.sqlite");
             tempdata.Database.EnsureCreated();
         }
         catch (Exception e)
@@ -120,8 +120,8 @@ public class Sentinel
             throw;
         }
         _random = new Random();
-        _assets = new AssetManager(@$"{conf.DataDirectory}\assets", @$"{conf.DataDirectory}\temp");
-        _ocr = new OCRManager(@$"{conf.DataDirectory}\tessdata", this);
+        _assets = new AssetManager(@$"{conf.DataDirectory}/assets", @$"{conf.DataDirectory}/temp");
+        _ocr = new OCRManager(@$"{conf.DataDirectory}/tessdata", this);
         _regexes = new Regexes();
     }
 
@@ -178,7 +178,7 @@ public class Sentinel
 
     private void LoadModules()
     {
-        DirectoryInfo dir = new DirectoryInfo($@"{_config.DataDirectory}\plugins");
+        DirectoryInfo dir = new DirectoryInfo($@"{_config.DataDirectory}/plugins");
         foreach (var dll in dir.GetFiles("*.dll"))
         {
             Console.WriteLine(dll.FullName);

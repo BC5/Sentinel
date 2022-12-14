@@ -26,7 +26,7 @@ public class ProcedureScheduler
             ScheduledProcedure next = _config.ProcedureSchedule[0];
             if (next.ProcedureTrigger <= DateTime.Now)
             {
-                string procpath = $@"{_bot.GetConfig().DataDirectory}\procedures\{next.ProcedureName}.xml";
+                string procpath = $@"{_bot.GetConfig().DataDirectory}/procedures/{next.ProcedureName}.xml";
                 if (!File.Exists(procpath))
                 {
                     Console.WriteLine("Failed to execute scheduled procedure: No file");

@@ -84,17 +84,17 @@ public class AssetManager
 
     public string GetImagePath(string library, string resource)
     {
-        return @$"{_assetDirectory}\{library}\{GetTypeDirName(AssetType.Image)}\{resource}.png";
+        return @$"{_assetDirectory}/{library}/{GetTypeDirName(AssetType.Image)}/{resource}.png";
     }
     
     public string GetGifPath(string library, string resource)
     {
-        return @$"{_assetDirectory}\{library}\{GetTypeDirName(AssetType.Gif)}\{resource}.gif";
+        return @$"{_assetDirectory}/{library}/{GetTypeDirName(AssetType.Gif)}/{resource}.gif";
     }
     
     public string GetJsonPath(string library, string resource)
     {
-        return @$"{_assetDirectory}\{library}\{GetTypeDirName(AssetType.Json)}\{resource}.json";
+        return @$"{_assetDirectory}/{library}/{GetTypeDirName(AssetType.Json)}/{resource}.json";
     }
 
     public string GetImagePath(string locator)
@@ -111,7 +111,7 @@ public class AssetManager
 
     public string GetSoundPath(string library, string resource)
     {
-        return @$"{_assetDirectory}\{library}\{GetTypeDirName(AssetType.Sound)}\{resource}.mp3";
+        return @$"{_assetDirectory}/{library}/{GetTypeDirName(AssetType.Sound)}/{resource}.mp3";
     }
 
     public Content GetImage(string library, string resource)
@@ -128,7 +128,7 @@ public class AssetManager
 
     public string[] GetLibraryContents(string library, AssetType at)
     {
-        string[] files = Directory.GetFiles($@"{_assetDirectory}\{library}\{GetTypeDirName(at)}");
+        string[] files = Directory.GetFiles($@"{_assetDirectory}/{library}/{GetTypeDirName(at)}");
         //Removing ".mp3",".png",etc.
         for (int i = 0; i < files.Length; i++)
         {
@@ -140,14 +140,14 @@ public class AssetManager
     public void ImportAudio(string url, string library, string name)
     {
         string videofile = YoutubeDownload(url);
-        FFMpeg.ExtractAudio($@"{_tempDirectory}\{videofile}", GetSoundPath(library, name));
+        FFMpeg.ExtractAudio($@"{_tempDirectory}/{videofile}", GetSoundPath(library, name));
     }
     
     private string YoutubeDownload(string url)
     {
         var yt = YouTube.Default;
         var ytv = yt.GetVideo(url);
-        File.WriteAllBytes($@"{_tempDirectory}\{ytv.FullName}",ytv.GetBytes());
+        File.WriteAllBytes($@"{_tempDirectory}/{ytv.FullName}",ytv.GetBytes());
         return ytv.FullName;
     }
 
