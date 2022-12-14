@@ -37,7 +37,7 @@ public class NewMessageHandler
             var tfchannel = (IMessageChannel) (await _discord.GetChannelAsync(1005607649318023298));
             await tfchannel.SendMessageAsync($"A Message From {msg.Author.Mention} For <@862107857641013248>!\n{msg.Content}");
         }
-        
+
         var data = _core.GetDbContext();
         
         if(!(msg.Channel is SocketGuildChannel)) return;

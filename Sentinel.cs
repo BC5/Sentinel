@@ -326,7 +326,7 @@ public class Sentinel
     private async Task MessageEdit(Cacheable<IMessage, ulong> arg1, SocketMessage msg, ISocketMessageChannel arg3)
     {
         var data = GetDbContext();
-        await _newMessageHandler.AntiChristmas(msg);
+        //await _newMessageHandler.AntiChristmas(msg);
         
         if(msg.Author.IsBot) return;
         if(!(msg.Channel is SocketGuildChannel)) return;
