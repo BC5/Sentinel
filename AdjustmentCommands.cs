@@ -1,4 +1,6 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.Primitives;
@@ -213,6 +215,62 @@ public class AdjustmentCommands : InteractionModuleBase
         usr.SentinelAttitude = attitude;
         await RespondAsync($"I'll now treat {user.Mention} {attitude}");
         await data.SaveChangesAsync();
+    }
+
+    [SlashCommand(name: "exportcfg", description: "Export this server's configuration to json")]
+    public async Task Export()
+    {
+        await DeferAsync();
+        var data = _core.GetDbContext();
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        byte[] json = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(srv));
+        var stream = new MemoryStream(json);
+        await FollowupWithFileAsync(stream,$"{Context.Guild.Id}.json");
+    }
+
+    [SlashCommand(name: "importcfg", description: "Import a configuration from json")]
+    public async Task Import(string url)
+    {
+        await DeferAsync();
+        Uri uri = new Uri(url);
+        switch (uri.Host)
+        {
+            case "cdn.discordapp.com":
+            case "gist.githubusercontent.com":
+            case "raw.githubusercontent.com":
+                break;
+            default:
+                await FollowupAsync("I only accept json files served from Discord or Github servers");
+                return;
+        }
+        HttpClient http = new HttpClient();
+        var response = await http.GetAsync(uri);
+        if (!response.IsSuccessStatusCode)
+        {
+            await FollowupAsync($"Error getting file: {(int) response.StatusCode}");
+            return;
+        }
+
+        string resp = await response.Content.ReadAsStringAsync();
+        try
+        {
+            ServerConfig? srv = JsonSerializer.Deserialize<ServerConfig>(resp);
+            if (srv == null)
+            {
+                await FollowupAsync("Error. Null after parsing.");
+                return;
+            }
+            var data = _core.GetDbContext();
+            await data.SetServerConfig(srv);
+            await data.SaveChangesAsync();
+            await FollowupAsync("Done.");
+        }
+        catch (Exception e)
+        {
+            await FollowupAsync($"Error parsing json: {e.Message}");
+            return;
+        }
+
     }
 
     [SlashCommand(name: "addresponse", description: "Add an AutoResponse")]

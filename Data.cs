@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.Contracts;
 using System.Net.Mail;
 using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using Discord;
@@ -164,6 +165,18 @@ public class Data : DbContext
         }
         return results[0];
     }
+
+    public async Task SetServerConfig(ServerConfig srv)
+    {
+        var results = await Servers.Where(x => x.DiscordID == srv.DiscordID).Include(y => y.Censor)
+            .Include(y => y.AutoResponses).ToListAsync();
+        if (results.Count != 0)
+        {
+            Servers.Remove(results[0]);
+        }
+        Servers.Add(srv);
+    }
+    
     public async Task<ServerUser> GetServerUser(IGuildUser user)
     {
         return await GetServerUser(user.Id, user.GuildId);
@@ -309,6 +322,7 @@ public class ServerConfig
 
 public class AutoResponse
 {
+    [JsonIgnore]
     [Key] 
     public int ResponseId { get; set; }
     public string Trigger { get; set; } = "";
@@ -377,6 +391,7 @@ public class AutoResponse
 
 public class CensorEntry
 {
+    [JsonIgnore]
     public int Id { get; set; }
     public string Phrase { get; set; } = "";
     public bool Requirement { get; set; } = false;
