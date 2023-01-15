@@ -58,7 +58,7 @@ public class NewMessageHandler
         if (!suppressquote && sgu != null) await RandomQuote(msg, sgu, user, srv, data);
 
         //Do autoresponses
-        await AutoResponses(msg);
+        await AutoResponses(msg, srv);
         
         //Attitude
         await Attitude(msg, user.SentinelAttitude);
@@ -196,17 +196,17 @@ public class NewMessageHandler
         }
     }
 
-    private async Task AutoResponses(SocketMessage msg)
+    private async Task AutoResponses(SocketMessage msg, ServerConfig srv)
     {
         if(msg.Author.IsBot) return;
 
-        List<Task<Config.AutoResponse?>> checks = new();
+        List<Task<AutoResponse?>> checks = new(); 
+
         if (msg is IUserMessage msg3)
         {
-            string mcont = msg.Content.ToUpper();
-            foreach (var ar in _config.AutoResponses)
+            foreach (var ar in srv.AutoResponses)
             {
-                checks.Add(ar.Check(msg3));
+                checks.Add(ar.Triggered(msg3));
             }
             await Task.WhenAll(checks);
             int actioned = 0;
@@ -215,7 +215,7 @@ public class NewMessageHandler
                 if (task.Result != null)
                 {
                     actioned++;
-                    await task.Result.Action(msg3,_config);
+                    await task.Result.Execute(msg3);
                     if(actioned >= 2) return;
                 }
             }

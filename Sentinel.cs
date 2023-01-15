@@ -221,8 +221,13 @@ public class Sentinel
     {
         Console.WriteLine("Initialising");
         //setup interaction service
+        var isc = new InteractionServiceConfig()
+        {
+            UseCompiledLambda = true
+        };
         _interactions = new InteractionService(_discord);
         
+
         //setup dependency inj.
         var srv = new ServiceCollection();
         srv.AddSingleton(this);
@@ -453,7 +458,14 @@ public class Sentinel
         if (_ticks % 30 == 0)
         {
             //PROCEDURE SCHEDULER
-            await _procScheduler.Tick();
+            try
+            {
+                await _procScheduler.Tick();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
             
             //NICKLOCKS
             try
@@ -566,7 +578,6 @@ public class Sentinel
             }
         }
     }
-
     private async Task InteractionCreated(SocketInteraction i)
     {
         try

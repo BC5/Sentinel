@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Security.Cryptography;
+using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.Primitives;
 
@@ -212,6 +213,200 @@ public class AdjustmentCommands : InteractionModuleBase
         usr.SentinelAttitude = attitude;
         await RespondAsync($"I'll now treat {user.Mention} {attitude}");
         await data.SaveChangesAsync();
+    }
+
+    [SlashCommand(name: "addresponse", description: "Add an AutoResponse")]
+    public async Task AddResponse()
+    {
+        await Context.Interaction.RespondWithModalAsync<ARModal>("new_response");
+    }
+    
+    [SlashCommand(name: "removeresponse", description: "Remove an AutoResponse")]
+    public async Task RemoveResponse(int page = 0)
+    {
+        try
+        {
+            var data = _core.GetDbContext();
+            ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+            List<AutoResponse> autoResponses = srv.AutoResponses;
+
+            var smb = new SelectMenuBuilder();
+
+            bool more = false;
+        
+            for (int i = (page * 25); i < autoResponses.Count; i++)
+            {
+                var ar = autoResponses[i];
+                if (smb.Options.Count == 25)
+                {
+                    more = true; 
+                    break;
+                }
+                smb.AddOption(Truncate(ar.Trigger, 30), $"{ar.ResponseId}", $"{Truncate(ar.ResponseText, 50)}");
+            }
+
+            if (smb.Options.Count == 0)
+            {
+                await RespondAsync("Nothing found to delete");
+            }
+
+            smb.WithMaxValues(1);
+            smb.WithMinValues(1);
+            smb.WithCustomId("del_response");
+            
+            var cb = new ComponentBuilder();
+            cb.WithSelectMenu(smb);
+
+            string moremsg = "";
+            if (more) moremsg = $"\nThere's another page. Use `/adjust removeresponse {page + 1}` to see it";
+            await RespondAsync($"**Select a response to delete.**{moremsg}", components: cb.Build());
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+
+    }
+
+    [ComponentInteraction("del_response",ignoreGroupNames:true)]
+    public async Task RemoveResponseComponent(string selection)
+    {
+        int arid = int.Parse(selection);
+        var data = _core.GetDbContext();
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        var ar = srv.AutoResponses.FirstOrDefault(ar => ar.ResponseId == arid);
+        if (ar != null)
+        {
+            srv.AutoResponses.Remove(ar);
+            await RespondAsync($"Removed Response with Trigger {ar.Trigger}");
+            await data.SaveChangesAsync();
+        }
+        else
+        {
+            await RespondAsync("Error: Couldn't find that response. Maybe it's already deleted?");
+        }
+    }
+
+    private static string Truncate(string? str, int max)
+    {
+        if (str == null) return "";
+        return str.Substring(0, Math.Min(str.Length, max));
+    }
+
+    [ModalInteraction("new_response", ignoreGroupNames:true)]
+    public async Task ModalResponse(ARModal modal)
+    {
+        if (modal.ResponseText == "" && modal.ResponseEmote == "")
+        {
+            await RespondAsync("Error: You must enter some form of response");
+            return;
+        }
+        
+        AutoResponse r = new AutoResponse();
+        r.Trigger = modal.Trigger.ToUpper();
+
+        if (!int.TryParse(modal.Chance, out int chance) || chance > 100 || chance < 0)
+        {
+            await RespondAsync("Error: Your chance needs to be an integer 0-100");
+            return;
+        }
+        r.Chance = chance;
+
+        if (modal.ResponseText != "") r.ResponseText = modal.ResponseText;
+        if (modal.ResponseEmote != "")
+        {
+            bool isemote = false;
+            bool isemoji = false;
+            if (Emoji.TryParse(modal.ResponseEmote, out var emoji))
+            {
+                isemoji = true;
+            }
+            else if (Emote.TryParse(modal.ResponseEmote, out var emote))
+            {
+                isemote = true;
+            }
+
+            if (!isemoji && !isemote)
+            {
+                await RespondAsync(
+                    "Error: Failed to parse emote. I need a unicode emoji or a discord emote (i.e. in form `<:kirbpeter:852602866958073917>`)");
+                return;
+            }
+
+            r.ResponseEmote = modal.ResponseEmote;
+        }
+
+        if (modal.RateLimit != "")
+        {
+            if (!int.TryParse(modal.RateLimit, out int rl))
+            {
+                await RespondAsync("Error: Didn't recognise your ratelimit time. Give it in seconds, as an integer");
+                return;
+            }
+
+            r.RateLimit = true;
+            r.ReloadTime = TimeSpan.FromSeconds(rl);
+        }
+
+        /*
+        if (modal.UserTarget != null)
+        {
+            if (!ulong.TryParse(modal.UserTarget, out ulong ut))
+            {
+                await RespondAsync("Error: User target isn't a valid snowflake");
+                return;
+            }
+            r.TargetUser = ut;
+        }
+        
+    
+        if (modal.ChannelTarget != null)
+        {
+            if (!ulong.TryParse(modal.ChannelTarget, out ulong ct))
+            {
+                await RespondAsync("Error: Channel isn't a valid snowflake");
+                return;
+            }
+            r.TargetChannel = ct;
+        }
+        */
+        
+        var data = _core.GetDbContext();
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        srv.AutoResponses.Add(r);
+        await data.SaveChangesAsync();
+        await RespondAsync("Added");
+    }
+
+    public class ARModal : IModal
+    {
+        public string Title => "Add an AutoResponse";
+        
+        [InputLabel("Trigger")]
+        [ModalTextInput("trigger")]
+        [RequiredInput(true)]
+        public string Trigger { get; set; }
+
+        [InputLabel("Response Text")] 
+        [ModalTextInput("responsetext", TextInputStyle.Paragraph)] 
+        [RequiredInput(false)]
+        public string ResponseText { get; set; }
+        
+        [InputLabel("React with Emote")] 
+        [ModalTextInput("responseemote", TextInputStyle.Short)] 
+        [RequiredInput(false)]
+        public string ResponseEmote { get; set; }
+
+        [InputLabel("Chance of triggering (0-100)")]
+        [ModalTextInput("chance", initValue: "100")]
+        [RequiredInput(true)]
+        public string Chance { get; set; } = "100";
+
+        [InputLabel("Ratelimit")]
+        [ModalTextInput("ratelimit",placeholder:"Time in seconds between responses")]
+        [RequiredInput(false)]
+        public string RateLimit { get; set; }
     }
 
 

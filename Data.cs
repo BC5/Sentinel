@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.Contracts;
 using System.Net.Mail;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using Discord;
@@ -153,7 +154,8 @@ public class Data : DbContext
     
     public async Task<ServerConfig> GetServerConfig(ulong server)
     {
-        var results = await Servers.Where(x => x.DiscordID == server).Include(y => y.Censor).ToListAsync();
+        var results = await Servers.Where(x => x.DiscordID == server).Include(y => y.Censor)
+            .Include(y => y.AutoResponses).ToListAsync();
         if (results.Count == 0)
         {
             var newserver = new ServerConfig(server);
@@ -300,8 +302,77 @@ public class ServerConfig
     public int RewardSize { get; set; } = 5;
     public bool FunnyCommands { get; set; } = false;
     public List<CensorEntry> Censor { get; set; } = new List<CensorEntry>();
+    public List<AutoResponse> AutoResponses { get; set; } = new List<AutoResponse>();
     public ulong? IdiotRole { get; set; }
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
+}
+
+public class AutoResponse
+{
+    [Key] 
+    public int ResponseId { get; set; }
+    public string Trigger { get; set; } = "";
+    public ulong? TargetUser { get; set; }
+    public ulong? TargetChannel { get; set; }
+    public bool Wildcard { get; set; } = false;
+    public string? ResponseText { get; set; }
+    public string? ResponseEmote { get; set; }
+    public int Chance { get; set; } = 100;
+
+    public bool RateLimit { get; set; } = false;
+    public DateTime? LastTrigger { get; set; }
+    public TimeSpan? ReloadTime { get; set; }
+
+    public async Task<AutoResponse?> Triggered(IUserMessage msg)
+    {
+        if (TargetUser != null) if (msg.Author.Id != TargetUser) return null;
+        if (TargetChannel != null) if (msg.Channel.Id != TargetChannel) return null;
+        if (RateLimit && LastTrigger != null && ReloadTime != null && LastTrigger + ReloadTime > DateTime.Now) return null;
+        if (Match(msg.Content) && Chance >= RandomNumberGenerator.GetInt32(0, 101)) return this;
+        return null;
+    }
+    
+    public bool Match(string input)
+    {
+        input = input.ToUpper();
+        bool match = false;
+        if (Wildcard) match = input.Contains(Trigger);
+        else
+        {
+            Regex rx = new(@$"\b{Trigger}\b");
+            match = rx.IsMatch(input);
+        }
+        return match;
+    }
+
+    public async Task Execute(IUserMessage msg)
+    {
+        LastTrigger = DateTime.Now;
+        if (ResponseText != null)
+        {
+            if (ResponseText == "RANDOMQUOTE")
+            {
+                //await msg.ReplyAsync(cfg.GetQuote());
+            }
+            else
+            {
+                await msg.ReplyAsync(ResponseText);
+            }
+        }
+        if (ResponseEmote != null)
+        {
+            if (Emoji.TryParse(ResponseEmote, out var emoji))
+            {
+                await msg.AddReactionAsync(emoji);
+            }
+            else if (Emote.TryParse(ResponseEmote, out var emote))
+            {
+                await msg.AddReactionAsync(emote);
+            }
+                    
+        }
+    }
+    
 }
 
 public class CensorEntry
