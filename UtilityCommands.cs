@@ -267,16 +267,16 @@ public class UtilityCommands : InteractionModuleBase
     [SlashCommand(name: "addquote", description: "Add a quote to the repository")]
     public async Task AddQuote(string quote)
     {
-        Config cfg = _core.GetConfig();
-
-        if (cfg.Quotes.Contains(quote))
+        var data = _core.GetDbContext();
+        var srv = await data.GetServerConfig(Context.Guild.Id);
+        if (srv.Quotes.Any(x => x.Text == quote))
         {
             await RespondAsync("Already added",ephemeral:true);
             return;
         }
         
-        cfg.Quotes.Add(quote);
-        await _core.UpdateConfig();
-        await RespondAsync($"Added \"{quote}\".\nI've got {cfg.Quotes.Count:n0} quotes now (😬)");
+        srv.Quotes.Add(new QuoteEntry() {ServerId = Context.Guild.Id, Text = quote});
+        await data.SaveChangesAsync();
+        await RespondAsync($"Added \"{quote}\".\nI've got {srv.Quotes.Count:n0} quotes now (😬)");
     }
 }

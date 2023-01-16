@@ -155,8 +155,11 @@ public class Data : DbContext
     
     public async Task<ServerConfig> GetServerConfig(ulong server)
     {
-        var results = await Servers.Where(x => x.DiscordID == server).Include(y => y.Censor)
-            .Include(y => y.AutoResponses).ToListAsync();
+        var results = await Servers.Where(x => x.DiscordID == server)
+            .Include(y => y.Censor)
+            .Include(y => y.AutoResponses)
+            .Include(y => y.Quotes)
+            .ToListAsync();
         if (results.Count == 0)
         {
             var newserver = new ServerConfig(server);
@@ -316,8 +319,16 @@ public class ServerConfig
     public bool FunnyCommands { get; set; } = false;
     public List<CensorEntry> Censor { get; set; } = new List<CensorEntry>();
     public List<AutoResponse> AutoResponses { get; set; } = new List<AutoResponse>();
+    public List<QuoteEntry> Quotes { get; set; } = new List<QuoteEntry>();
     public ulong? IdiotRole { get; set; }
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
+    
+    public string GetRandomQuote()
+    {
+        if (Quotes.Count == 0) return "brain empty 😭. fill me with nonsense.";
+        var x = Quotes[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
+        return x.Text;
+    }
 }
 
 public class AutoResponse
@@ -453,6 +464,14 @@ public class Transaction
         Invalid,
         Failed
     }
+}
+
+public class QuoteEntry
+{
+    [Key]
+    public int Id { get; set; }
+    public ulong ServerId { get; set; }
+    public string Text { get; set; } = "";
 }
 
 public class Vote

@@ -19,7 +19,6 @@ public class Config
     public ulong[] Servers { get; set; } = Array.Empty<ulong>();
     public string[] Statuses { get; set; } = Array.Empty<string>();
     public List<FactCheck> FactChecks { get; set; } = new();
-    public List<string> Quotes { get; set; } = new();
     public List<string> BelligerentResponses { get; set; } = new();
     public string DataDirectory { get; set; } = @"./data";
     public List<AutoResponse> AutoResponses { get; set; } = new();
@@ -30,12 +29,7 @@ public class Config
     {
         return Statuses[RandomNumberGenerator.GetInt32(0, Statuses.Length)];
     }
-    
-    public string GetQuote()
-    {
-        return Quotes[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
-    }
-    
+
     public string GetBelligerentResponse()
     {
         return BelligerentResponses[RandomNumberGenerator.GetInt32(0, BelligerentResponses.Count)];

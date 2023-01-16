@@ -187,7 +187,7 @@ public class NewMessageHandler
                 {
                     if (msg2.ReferencedMessage != null &&
                         msg2.ReferencedMessage.Author.Id == _discord.CurrentUser.Id) break;
-                    var quote = _config.GetQuote();
+                    var quote = srv.GetRandomQuote();
 
                     quote = await _config.QuoteProcess(quote, sgu, user, _detention, srv, data);
                     await msg2.ReplyAsync(quote);

@@ -229,7 +229,7 @@ public class AdjustmentCommands : InteractionModuleBase
     }
 
     [SlashCommand(name: "importcfg", description: "Import a configuration from json")]
-    public async Task Import(string url)
+    public async Task ImportCfg(string url)
     {
         await DeferAsync();
         Uri uri = new Uri(url);
@@ -262,6 +262,55 @@ public class AdjustmentCommands : InteractionModuleBase
             }
             var data = _core.GetDbContext();
             await data.SetServerConfig(srv);
+            await data.SaveChangesAsync();
+            await FollowupAsync("Done.");
+        }
+        catch (Exception e)
+        {
+            await FollowupAsync($"Error parsing json: {e.Message}");
+            return;
+        }
+
+    }
+    
+    [SlashCommand(name: "importquotes", description: "Import quotes from a json array")]
+    public async Task ImportQuotes(string url)
+    {
+        await DeferAsync();
+        Uri uri = new Uri(url);
+        switch (uri.Host)
+        {
+            case "cdn.discordapp.com":
+            case "gist.githubusercontent.com":
+            case "raw.githubusercontent.com":
+                break;
+            default:
+                await FollowupAsync("I only accept json files served from Discord or Github servers");
+                return;
+        }
+        HttpClient http = new HttpClient();
+        var response = await http.GetAsync(uri);
+        if (!response.IsSuccessStatusCode)
+        {
+            await FollowupAsync($"Error getting file: {(int) response.StatusCode}");
+            return;
+        }
+
+        string resp = await response.Content.ReadAsStringAsync();
+        try
+        {
+            string[]? quotes = JsonSerializer.Deserialize<string[]>(resp);
+            if (quotes == null)
+            {
+                await FollowupAsync("Error. Null after parsing.");
+                return;
+            }
+            var data = _core.GetDbContext();
+            var srv = await data.GetServerConfig(Context.Guild.Id);
+            foreach (var q in quotes)
+            {
+                srv.Quotes.Add(new QuoteEntry() {ServerId = Context.Guild.Id,Text = q});
+            }
             await data.SaveChangesAsync();
             await FollowupAsync("Done.");
         }
