@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Mime;
+using System.Reflection;
 using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using Discord;
@@ -31,8 +32,31 @@ public class OCRManager
         _core = core;
         _sha = SHA1.Create();
         _http = new();
-        _tess = new(tessdata, "eng");
+        _tess = TessSetup(tessdata, "eng");
         _messageQueue = new Queue<IMessage>();
+    }
+
+    private TesseractEngine TessSetup(string tessdata, string lang)
+    {
+        try
+        {
+            return new TesseractEngine(tessdata, lang);
+        }
+        catch (TargetInvocationException e)
+        {
+            if (e.InnerException is DllNotFoundException)
+            {
+                Console.WriteLine("Couldn't find libraries");
+                if (File.Exists("/.dockerenv"))
+                {
+                    Console.WriteLine("We're in a docker container");
+                    Console.WriteLine("libleptonica found: "  + File.Exists("/app/x64/libleptonica-1.80.0.so"));
+                    Console.WriteLine("libtesseract found: "  + File.Exists("/app/x64/libtesseract41.so"));
+                }
+            }
+            
+            throw;
+        }
     }
 
     public async Task FetchMoreMessages()

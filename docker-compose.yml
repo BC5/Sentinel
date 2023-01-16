@@ -1,0 +1,7 @@
+﻿services:
+  sentinel:
+    container_name: "sentinel"
+    build: .
+    volumes: 
+      - "./sentinel.json:/app/sentinel.json"
+      - "./data/:/app/data/"
