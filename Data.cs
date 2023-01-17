@@ -468,6 +468,7 @@ public class Transaction
 
 public class QuoteEntry
 {
+    [JsonIgnore]
     [Key]
     public int Id { get; set; }
     public ulong ServerId { get; set; }
