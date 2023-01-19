@@ -349,7 +349,7 @@ public class AdjustmentCommands : InteractionModuleBase
                     more = true; 
                     break;
                 }
-                smb.AddOption(Truncate(ar.Trigger, 30), $"{ar.ResponseId}", $"{Truncate(ar.ResponseText, 50)}");
+                smb.AddOption(Truncate(ar.Trigger, 30), $"{ar.ResponseId}", $"{Truncate((ar.ResponseEmote + ar.ResponseText), 50)}");
             }
 
             if (smb.Options.Count == 0)
