@@ -370,14 +370,14 @@ public class AutoResponse
         return match;
     }
 
-    public async Task Execute(IUserMessage msg)
+    public async Task Execute(IUserMessage msg, ServerConfig srv)
     {
         LastTrigger = DateTime.Now;
         if (ResponseText != null)
         {
             if (ResponseText == "RANDOMQUOTE")
             {
-                //await msg.ReplyAsync(cfg.GetQuote());
+                await msg.ReplyAsync(srv.GetRandomQuote());
             }
             else
             {
