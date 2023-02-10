@@ -263,6 +263,10 @@ public class AdjustmentCommands : InteractionModuleBase
             var data = _core.GetDbContext();
             await data.SetServerConfig(srv);
             await data.SaveChangesAsync();
+            //Deduplicate
+            var nsrv = await data.GetServerConfig(srv.DiscordID);
+            nsrv.DeduplicateQuotes();
+            await data.SaveChangesAsync();
             await FollowupAsync("Done.");
         }
         catch (Exception e)

@@ -168,11 +168,13 @@ public class Data : DbContext
         }
         return results[0];
     }
-
     public async Task SetServerConfig(ServerConfig srv)
     {
-        var results = await Servers.Where(x => x.DiscordID == srv.DiscordID).Include(y => y.Censor)
-            .Include(y => y.AutoResponses).ToListAsync();
+        var results = await Servers.Where(x => x.DiscordID == srv.DiscordID)
+            .Include(y => y.Censor)
+            .Include(y => y.AutoResponses)
+            .Include(y => y.Quotes)
+            .ToListAsync();
         if (results.Count != 0)
         {
             Servers.Remove(results[0]);
@@ -329,6 +331,26 @@ public class ServerConfig
         var x = Quotes[RandomNumberGenerator.GetInt32(0, Quotes.Count)];
         return x.Text;
     }
+
+    public void DeduplicateQuotes()
+    {
+        for (int i = 0; i < Quotes.Count; i++)
+        {
+            List<QuoteEntry> matches = new();
+            for (int j = i; i < Quotes.Count; j++)
+            {
+                if (Quotes[i].Text == Quotes[j].Text && i != j)
+                {
+                    matches.Add(Quotes[j]);
+                }
+                for (int k = 0; k < matches.Count; k++)
+                {
+                    Quotes.Remove(Quotes[k]);
+                }
+            }
+        }
+    }
+    
 }
 
 public class AutoResponse
