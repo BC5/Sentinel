@@ -337,7 +337,7 @@ public class ServerConfig
         for (int i = 0; i < Quotes.Count; i++)
         {
             List<QuoteEntry> matches = new();
-            for (int j = i; i < Quotes.Count; j++)
+            for (int j = i; j < Quotes.Count; j++)
             {
                 if (Quotes[i].Text == Quotes[j].Text && i != j)
                 {
