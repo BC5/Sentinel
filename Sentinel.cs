@@ -346,6 +346,10 @@ public class Sentinel
                 await msg.DeleteAsync();
             }
         }
+        
+        //Apply Frenchification
+        await NewMessageHandler.Francais(msg, user,_textcat);
+        
     }
 
     private async Task UpdateMember(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
