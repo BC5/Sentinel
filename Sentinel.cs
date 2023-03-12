@@ -320,6 +320,13 @@ public class Sentinel
             int rejoinfee = 100;
             if (profile.Balance < 100) rejoinfee = profile.Balance;
             await data.Transact(profile, null, rejoinfee, Transaction.TxnType.Tax);
+
+            if (arg.Guild.Id == 1019326226713817138)
+            {
+                var c = (ITextChannel) arg.Guild.GetChannel(1019326857193205770);
+                await c.SendMessageAsync($"{arg.Mention} look who's back!");
+                await c.SendMessageAsync("https://tenor.com/view/mr-burns-dont-forget-youre-here-forever-gif-18420566");
+            }
         }
     }
 
