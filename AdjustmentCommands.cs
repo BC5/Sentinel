@@ -28,23 +28,6 @@ public class AdjustmentCommands : InteractionModuleBase
         await data.SaveChangesAsync();
     }
 
-    [SlashCommand("botnick", "Change the bot's nickname")]
-    public async Task BotNick([MaxLength(32)] string nickname)
-    {
-        try
-        {
-            var u = await Context.Guild.GetCurrentUserAsync();
-            await u.ModifyAsync(x => x.Nickname = nickname);
-            await RespondAsync($"Changed my nickname to {nickname}");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            await RespondAsync("Ran into a problem. Maybe you put some stupid special character in there or I don't have permission?");
-        }
-        
-    }
-    
     [SlashCommand("frenchchannel","Channel where french will be enforced")]
     public async Task FrenchChannel([ChannelTypes(ChannelType.Text)] IGuildChannel channel)
     {

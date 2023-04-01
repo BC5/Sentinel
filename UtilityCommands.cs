@@ -86,6 +86,25 @@ public class UtilityCommands : InteractionModuleBase
         await _core.GetClient().SetGameAsync(message, type: type);
         await RespondAsync("Done",ephemeral:true);
     }
+    
+    [DefaultMemberPermissions(GuildPermission.Administrator)]
+    [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
+    [SlashCommand("botnick", "Change the bot's nickname")]
+    public async Task BotNick([MaxLength(32)] string nickname)
+    {
+        try
+        {
+            var u = await Context.Guild.GetCurrentUserAsync();
+            await u.ModifyAsync(x => x.Nickname = nickname);
+            await RespondAsync($"Changed my nickname to {nickname}");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            await RespondAsync("Ran into a problem. Maybe you put some stupid special character in there or I don't have permission?");
+        }
+        
+    }
 
     [SlashCommand(name: "warnings", description: "See a user's warnings")]
     public async Task Warnings(IGuildUser user)
