@@ -355,7 +355,7 @@ public class Sentinel
         }
         
         //Apply Frenchification
-        await NewMessageHandler.Francais(msg, user,_textcat);
+        await NewMessageHandler.Francais(msg, user,srv,_textcat);
         
     }
 

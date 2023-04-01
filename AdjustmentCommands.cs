@@ -28,6 +28,25 @@ public class AdjustmentCommands : InteractionModuleBase
         await data.SaveChangesAsync();
     }
     
+    [SlashCommand("frenchchannel","Channel where french will be enforced")]
+    public async Task FrenchChannel([ChannelTypes(ChannelType.Text)] IGuildChannel channel)
+    {
+        var data = _core.GetDbContext();
+        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+
+        if (srv.FrenchChannel == channel.Id)
+        {
+            srv.FrenchChannel = null;
+            await RespondAsync($"French Channel is now disabled");
+        }
+        else
+        {
+            srv.FrenchChannel = channel.Id;
+            await RespondAsync($"French Channel is now <#{channel.Id}>");
+        }
+        await data.SaveChangesAsync();
+    }
+    
     [SlashCommand("modrole","Adjust role recognised as moderators")]
     public async Task Modrole(IRole role)
     {

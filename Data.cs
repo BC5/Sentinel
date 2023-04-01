@@ -324,6 +324,7 @@ public class ServerConfig
     public List<QuoteEntry> Quotes { get; set; } = new List<QuoteEntry>();
     public ulong? IdiotRole { get; set; }
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
+    public ulong? FrenchChannel { get; set; }
     
     public string GetRandomQuote()
     {

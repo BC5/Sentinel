@@ -77,7 +77,7 @@ public class NewMessageHandler
         await Censor(msg, user, srv);
         
         //Apply Frenchification
-        await Francais(msg, user,_textcat);
+        await Francais(msg, user,srv,_textcat);
         
         await data.SaveChangesAsync();
     }
@@ -157,10 +157,9 @@ public class NewMessageHandler
         return false;
     }
 
-    public static async Task Francais(SocketMessage msg, ServerUser user, TextCat textcat)
+    public static async Task Francais(SocketMessage msg, ServerUser user, ServerConfig srv, TextCat textcat)
     {
-        if(msg.Channel.Id != 1021889219209211904 && !user.Francophone) return;
-
+        if(msg.Channel.Id != srv.FrenchChannel && !user.Francophone) return;
         if(msg.Content == "") return;
         
         if (!textcat.IsFrench(msg.Content) && msg is SocketUserMessage umsg)
