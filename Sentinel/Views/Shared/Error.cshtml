@@ -1,0 +1,47 @@
+﻿@using Sentinel;
+@{
+    ViewData["Title"] = "Oopsie!";
+
+    string title = "idk lmao";
+    int code = 500;
+    string detail = "wtf did you do";
+
+    if (ViewData["ErrCode"] != null) code = (int) ViewData["ErrCode"];
+
+    switch(code)
+    {
+        case 500:
+            title = "I imploded!";
+            detail = "This application was clearly coded by an @idiot";
+            break;
+        case 404:
+            title = "Never heard of it.";
+            detail = "You probably imagined it. It was never real.";
+            break;
+        case 400:
+            title = "Embarassing Post. Kill Yourself.";
+            detail = "Bungled up that one, didn't you?";
+            break;
+    }
+    if(ViewData["ErrTitle"] != null)
+    {
+        title = (string) ViewData["ErrTitle"];
+    }
+    if (ViewData["ErrDetail"] != null)
+    {
+        detail = (string)ViewData["ErrDetail"];
+    }
+
+}
+<h1>Oopsie! @title</h1>
+
+<br />
+
+<div class="warning">
+    <div class="warn-emoji">⚠️</div> <span class="http-code">@code</span> <span>@detail</span>
+</div>
+<br /><br />
+@if(code==500)
+{
+    <img src="https://media.tenor.com/Aycm3aviSzgAAAAd/live-garfield-reaction.gif" />
+}

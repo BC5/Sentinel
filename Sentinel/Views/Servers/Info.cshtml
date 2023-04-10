@@ -1,0 +1,43 @@
+﻿@using Sentinel;
+@{
+    ServerConfig server = (ServerConfig)ViewData["ServerDetails"];
+    bool unknown = false;
+    if(server.Name != null && server.Name != "")
+    {
+        ViewData["Title"] = server.Name;
+    }
+    else
+    {
+        ViewData["Title"] = "Unknown Server";
+        unknown = true;
+    }
+}
+
+@if(unknown)
+{
+    <h2>Unknown Server</h2>
+    <br />
+    <a class="server-card-link" href="/Servers/Info?id=@server.DiscordID">
+        <div class="server-card server-card-unknown">
+            <img src="/assets/unknown.png" />
+            <span>Unknown Server: @server.DiscordID</span>
+        </div>
+    </a>
+
+    <div class="warning">
+        <div class="warn-emoji">⚠️</div> <span>Sentinel caches server information on startup to populate server name and icon.<br />If information is missing for a server then I might not have cached it yet, or was kicked from the server before I had the chance to.</span>
+    </div>
+}
+else
+{
+    <h2>@server.Name</h2>
+    <br />
+    <a class="server-card-link" href="/Servers/Info?id=@server.DiscordID">
+        <div class="server-card">
+            <img src="@server.IconURL" onerror='this.src = "/assets/unknown.png"' />
+            <span>@server.Name</span>
+        </div>
+    </a>
+}
+
+<br />

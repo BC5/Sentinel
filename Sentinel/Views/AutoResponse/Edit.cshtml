@@ -1,0 +1,68 @@
+﻿@using Sentinel;
+@{
+    ViewData["Title"] = "Edit AutoResponse";
+    ServerConfig server = (ServerConfig)ViewData["ServerDetails"];
+    AutoResponse ar = (AutoResponse) ViewData["AutoResponse"];
+}
+
+
+<h2>Edit Autoresponse</h2>
+<br/>
+<div class="server-card">
+    <img src="@server.IconURL" />
+    <span>@server.Name</span>
+</div>
+<br/>
+<form action="/AutoResponse/Edit?server=@server.DiscordID&id=@ar.ResponseId" method="post">
+    <div class="edit-field">
+        <label>Trigger</label>
+        <input name="Trigger" value="@ar.Trigger">
+    </div>
+    <div class="edit-field">
+        <label>Wildcard</label>
+        @{
+            if (ar.Wildcard) { <input name="Wildcard" value="true" type="checkbox" checked> }
+            else { <input name="Wildcard" value="true" type="checkbox"> }
+        }
+    </div>
+    <div class="edit-field">
+        <label>Response Text</label>
+        <input name="ResponseText" value="@ar.ResponseText">
+    </div>
+    <div class="edit-field">
+        <label>Response Emote</label>
+        <input name="ResponseEmote" value="@ar.ResponseEmote">
+    </div>
+    <div class="edit-field">
+        <label>Target User</label>
+        <input name="TargetUser" value="@ar.TargetUser" type="number">
+    </div>
+    <div class="edit-field">
+        <label>Target Channel</label>
+        <input name="TargetChannel" value="@ar.TargetChannel" type="number">
+    </div>
+    <div class="edit-field">
+        <label>Trigger Chance</label>
+        <input name="Chance" value="@ar.Chance" type="number">
+    </div>
+    <div class="edit-field">
+        <label>Ratelimit</label>
+        @{
+            if (ar.RateLimit)
+            {
+                <input name="RateLimit" value="true" type="checkbox" checked>
+            }
+            else
+            {
+                <input name="RateLimit" value="true" type="checkbox">
+            }
+        }
+    </div>
+    <div class="edit-field">
+        <label>Ratelimit Time</label>
+        <input name="ReloadTime" value="@ar.ReloadTime" type="text">
+    </div>
+
+    <input class="submit-button" type="submit" value="Save"/>
+
+</form>

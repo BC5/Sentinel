@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentinel", "Sentinel.csproj", "{127140D8-4201-4DB9-8EA9-4176E99AA1E2}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentinel", "Sentinel\Sentinel.csproj", "{282E5CED-BE98-4881-8730-107EF015EC28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{127140D8-4201-4DB9-8EA9-4176E99AA1E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{127140D8-4201-4DB9-8EA9-4176E99AA1E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{127140D8-4201-4DB9-8EA9-4176E99AA1E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{127140D8-4201-4DB9-8EA9-4176E99AA1E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{282E5CED-BE98-4881-8730-107EF015EC28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{282E5CED-BE98-4881-8730-107EF015EC28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{282E5CED-BE98-4881-8730-107EF015EC28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{282E5CED-BE98-4881-8730-107EF015EC28}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A60D30ED-7FAB-4C93-8BE0-4D0A1CAD5D90}
 	EndGlobalSection
 EndGlobal

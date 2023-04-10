@@ -1,0 +1,299 @@
+
+body 
+{
+    padding: 0;
+    margin: 0;
+    background-color: #1c1c1c;
+    color: white;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 20px;
+}
+
+h1 
+{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 40px;
+    margin: 0;
+}
+
+h2 
+{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 30px;
+    margin: 0;
+}
+
+h3 
+{
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    margin: 10px 0 0;
+}
+
+.sidebar 
+{
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: #c96d00;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+}
+
+.command 
+{
+    font-family: 'Source Code Pro', monospace;
+    background-color: #5865F2;
+    border-radius: 4px;
+    font-size: 16px;
+    padding: 2px 6px 2px 6px;
+}
+
+.arg 
+{
+    background-color: #313336;
+    padding: 0px 4px 0px 4px;
+    border-radius: 4px;
+}
+
+.sidebar-item {
+    display: block;
+    color: white;
+    padding: 10px 1px 10px 10px;
+    text-decoration: none;
+    background-color: rgba(0, 0, 0, 0.1);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    box-shadow: #00000017 0px 1px 5px 1px;
+}
+
+.sidebar-item:hover 
+{
+    background-color: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.sidebar-title
+{
+    font-size: 26px;
+    margin-bottom: 15px;
+    background-color: transparent !important;
+}
+
+.content 
+{
+    margin-left: 200px;
+    padding: 10px 15px 0px 15px;
+}
+
+.warning 
+{
+    background-color: #fae776;
+    border-radius: 5px;
+    display: inline-flex;
+    color: black;
+    font-weight: 600;
+    align-items: center;
+    border-color: #b47b01;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.warning span 
+{
+    padding: 0 10px 0 5px;
+}
+
+.http-code 
+{
+    font-family: 'Source Code Pro', monospace;
+    font-weight: bold;
+    font-size: 22px;
+    color: red;
+    margin-left: 5px;
+}
+
+.warn-emoji 
+{
+    font-size: 30px;
+}
+
+.idiot {
+    color: rgb(153, 45, 34);
+    background-color: rgba(153, 45, 34, 0.1);
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+table.autoresponse 
+{
+    padding: 5px;
+}
+
+div.autoresponse 
+{
+    background-color: #515151;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: inline-flex;
+}
+
+table.autoresponse td 
+{
+    padding-right: 15px;
+}
+
+td.trigger-wildcard
+{
+    color: #ff8080;
+    cursor: help;
+}
+
+div.autoresponse-toolbar 
+{
+    background-color: #454545;
+    display: flex;
+    flex-direction: column;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-radius: 0px 5px 5px 0px;
+}
+
+div.autoresponse-toolbar span 
+{
+    padding: 8px;
+    font-size: 14px;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: bold;
+    color: #2b2b2b;
+}
+
+button.toolbar-button
+{
+    background-color: transparent;
+    border-style: none;
+    cursor: pointer;
+}
+
+button.button-warn:hover 
+{
+    /* This CSS filter makes things red */
+    filter: invert(20%) sepia(57%) saturate(5888%) hue-rotate(349deg) brightness(86%) contrast(138%);
+}
+
+button.button-normal:hover 
+{
+    /* This CSS filter makes things green */
+    filter: invert(51%) sepia(52%) saturate(4595%) hue-rotate(90deg) brightness(130%) contrast(120%);
+}
+
+button.toolbar2-button 
+{
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+    font-size: 16px;
+}
+
+button.toolbar2-button span 
+{
+    line-height: 30px;
+    height: 30px;
+    margin-right: 5px;
+}
+
+button.toolbar2-button img
+{
+    margin-right: 10px;
+    display: inline;
+    vertical-align: middle;
+    padding-bottom: 5px;
+}
+
+div.server-card 
+{
+    background-color: #868686;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+div.server-card img
+{
+    border-radius: 5px;
+    width: 64px
+}
+
+div.server-card span
+{
+    padding-bottom: 5px;
+    text-decoration: none;
+}
+
+a.server-card-link 
+{
+    text-decoration: none;
+    color: white;
+}
+
+div.server-card-unknown 
+{
+    background-color: #867777;
+    color: #5f0000;
+}
+
+div.edit-field
+{
+    margin-bottom: 10px;
+}
+
+div.edit-field input
+{
+    display: inline-block;
+    font-size: 16px;
+}
+
+div.edit-field label
+{
+    min-width: 175px;
+    display: inline-block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+}
+
+@media screen and (max-width: 700px) 
+{
+    .sidebar 
+    {
+        width: 100%;
+        height: auto;
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .sidebar-item 
+    {
+        float: left;
+        flex-grow: 1;
+        text-align: center;
+        margin: 5px;
+        padding: 5px;
+    }
+
+    .sidebar-title
+    {
+        width: 100%;
+    }
+
+    .content 
+    {
+        margin-left: 0;
+    }
+}

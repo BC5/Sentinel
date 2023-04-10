@@ -1,0 +1,89 @@
+﻿@using Sentinel;
+@{
+    ViewData["Title"] = "AutoResponse";
+    ServerConfig server = (ServerConfig) ViewData["ServerDetails"];
+}
+
+
+<h2>Server Autoresponses</h2>
+<br />
+<div class="server-card">
+    <img src="@server.IconURL"/>
+    <span>@server.Name</span>
+</div>
+<br />
+<button class="toolbar2-button" onclick="window.location='/AutoResponse/Add?server=@server.DiscordID'"><img src="~/assets/plus.svg"></img><span>Add Autoresponse</span></button>
+<br />
+<br />
+@foreach (var ar in (List<AutoResponse>) ViewData["AutoResponses"])
+{
+    <div class="autoresponse">
+        <table class="autoresponse">
+            <tr>
+                <td>Trigger</td>
+                @if(ar.Wildcard)
+                {
+                    <td class="trigger-wildcard" title="Trigger is wildcarded">@ar.Trigger *</td>
+                }
+                else
+                {
+                    <td>@ar.Trigger</td>
+                }
+            </tr>
+            @if(ar.ResponseText != null && ar.ResponseText != "")
+            {
+                <tr>
+                    <td>Response Text</td>
+                    <td>@ar.ResponseText</td>
+                </tr>
+            }
+            @if(ar.ResponseEmote != null && ar.ResponseEmote != "")
+            {
+                <tr>
+                    <td>Response Emote</td>
+                    <td>@ar.ResponseEmote</td>
+                </tr>
+            }
+
+            @if (ar.TargetUser != null && ar.TargetUser != 0)
+            {
+                <tr>
+                    <td>Target User</td>
+                    <td>@ar.TargetUser</td>
+                </tr>
+            }
+
+            @if (ar.TargetChannel != null && ar.TargetChannel != 0)
+            {
+                <tr>
+                    <td>Target Channel</td>
+                    <td>@ar.TargetChannel</td>
+                </tr>
+            }
+
+            @if (ar.RateLimit)
+            {
+                <tr>
+                    <td>Ratelimit</td>
+                    <td>@ar.ReloadTime</td>
+                </tr>
+            }
+
+
+            @if (ar.Chance != 100)
+            {
+                <tr>
+                    <td>Trigger Chance</td>
+                    <td>@ar.Chance</td>
+                </tr>
+            }
+            
+        </table>
+        <div class="autoresponse-toolbar">
+            <button class="toolbar-button button-normal" onclick="window.location='/AutoResponse/Edit?server=@server.DiscordID&id=@ar.ResponseId'"><img src="~/assets/edit.svg"></img></button>
+            <button class="toolbar-button button-warn" onclick="window.location='/AutoResponse/Remove?server=@server.DiscordID&id=@ar.ResponseId'"><img src="~/assets/delete.svg"></img></button>
+            <span>@ar.ResponseId</span>
+        </div>
+    </div>
+    <br/>
+}
