@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 using Discord;
 using Discord.WebSocket;
 using Sentinel.Archivist;
@@ -31,6 +32,9 @@ public class NewMessageHandler
     
     public async Task NewMessage(SocketMessage msg)
     {
+        //Start voicenote download
+        Task voiceNote = StashVoiceNote(msg);
+
         //Harass Nelson
         if (msg.Content.Contains("@Nelson") && !msg.Author.IsBot)
         {
@@ -80,6 +84,24 @@ public class NewMessageHandler
         await Francais(msg, user,srv,_textcat);
         
         await data.SaveChangesAsync();
+
+        //Await voicenote
+        await voiceNote;
+    }
+
+    private async Task StashVoiceNote(SocketMessage msg)
+    {
+        if (msg.Attachments != null && msg.Attachments.Count > 0)
+        {
+            var attach = msg.Attachments.First();
+            if (attach.Filename.Contains(".ogg"))
+            {
+                using (var client = new WebClient())
+                {
+                    await client.DownloadFileTaskAsync(attach.ProxyUrl,$"{_config.DataDirectory}/stash/{msg.Author.Username}-{msg.Id}.ogg");
+                }
+            }
+        }
     }
 
     private void OCR(IMessage msg)
