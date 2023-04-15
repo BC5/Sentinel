@@ -21,6 +21,7 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-preview.3.23174.8" />
       <PackageReference Include="NTextCat" Version="0.3.65" />
       <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.3" />
+      <PackageReference Include="System.Memory" Version="4.5.4" />
       <PackageReference Include="Tesseract" Version="4.1.1" />
       <PackageReference Include="Topten.RichTextKit" Version="0.4.165" />
       <PackageReference Include="TweetinviAPI" Version="5.0.4" />
