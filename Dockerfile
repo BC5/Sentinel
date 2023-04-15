@@ -6,8 +6,8 @@ RUN ln -s /app/data/tessdata/libtesseract41.so libtesseract41.so
 RUN sed -i'.bak' 's/$/ contrib/' /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get install -y libc-dev libfontconfig1 fontconfig ttf-bitstream-vera fonts-freefont-ttf ttf-mscorefonts-installer
-RUN dpkg -i /app/data/assets/fonts/deb/twemoji.deb
-RUN cp /app/data/assets/fonts/ttf/*.ttf /usr/share/fonts/
+RUN dpkg -i /src/data/assets/fonts/deb/twemoji.deb
+RUN cp /src/data/assets/fonts/ttf/*.ttf /usr/share/fonts/
 RUN fc-cache -f
 WORKDIR /app
 
