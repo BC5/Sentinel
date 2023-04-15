@@ -1,9 +1,8 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Encodings.Web;
 using System.Text.Json.Nodes;
+using ImageMagick;
 using VideoLibrary;
 
 namespace Sentinel.ImageProcessing;
@@ -96,16 +95,16 @@ public class Content
         if (t == ContentType.UnknownGIF)
         {
             DateTime start = DateTime.Now;
-            using (Bitmap b = new Bitmap(new MemoryStream(content)))
+
+            using (var mi = new MagickImageCollection(content))
             {
-                var dim = new FrameDimension(b.FrameDimensionsList[0]);
-                if (b.GetFrameCount(dim) == 1)
+                if (mi.Count > 1)
                 {
-                    t = ContentType.StaticImage;
+                    t = ContentType.AnimatedImage;
                 }
                 else
                 {
-                    t = ContentType.AnimatedImage;
+                    t = ContentType.StaticImage;
                 }
             }
             DateTime finish = DateTime.Now;

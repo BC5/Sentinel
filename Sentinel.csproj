@@ -10,21 +10,21 @@
 
     <ItemGroup>
       <PackageReference Include="Discord.Net" Version="3.10.0" />
-      <PackageReference Include="FFMpegCore" Version="4.8.0" />
+      <PackageReference Include="FFMpegCore" Version="5.1.0" />
       <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="2.8.2.3" />
-      <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="12.2.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0-rc.2.22472.11" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0-rc.2.22472.11">
+      <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="13.0.1" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0-preview.3.23174.2" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0-preview.3.23174.2">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0-rc.2.22472.3" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-preview.3.23174.8" />
       <PackageReference Include="NTextCat" Version="0.3.65" />
       <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.3" />
-      <PackageReference Include="Tesseract" Version="4.1.1" />
-      <PackageReference Include="Topten.RichTextKit" Version="0.4.163-preview" />
+      <PackageReference Include="Tesseract" Version="5.2.0" />
+      <PackageReference Include="Topten.RichTextKit" Version="0.4.165" />
       <PackageReference Include="TweetinviAPI" Version="5.0.4" />
-      <PackageReference Include="VideoLibrary" Version="3.2.2" />
+      <PackageReference Include="VideoLibrary" Version="3.2.3" />
     </ItemGroup>
 
     <ItemGroup>
