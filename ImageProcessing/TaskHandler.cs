@@ -58,6 +58,8 @@ public class TaskHandler : InteractionModuleBase
     public async static Task Execute(SocketModal modal, AssetManager assets)
     {
         string taskId = modal.Data.CustomId.Substring(5);
+
+        
         
         string jsontext = File.ReadAllText(assets.GetJsonPath("operations", taskId));
         var opt = new JsonSerializerSettings();
@@ -79,11 +81,12 @@ public class TaskHandler : InteractionModuleBase
             else args = args + ";" + component.Value.Replace(';', ';');
         }
         string[] argss = args.Split(";");
+        await modal.DeferAsync();
         object? img = sequence.Execute(assets, argss);
 
         if (img == null)
         {
-            await modal.RespondAsync("Error", ephemeral: true);
+            await modal.FollowupAsync("Error", ephemeral: true);
         }
         else
         {
@@ -91,17 +94,17 @@ public class TaskHandler : InteractionModuleBase
             {
                 MagickImageCollection gif = (MagickImageCollection) img;
                 var ms = new MemoryStream(gif.ToByteArray());
-                await modal.RespondWithFileAsync(ms, "operation.gif");
+                await modal.FollowupWithFileAsync(ms, "operation.gif");
             }
             else if(img is MagickImage)
             {
                 MagickImage png = (MagickImage) img;
                 var ms = new MemoryStream(png.ToByteArray());
-                await modal.RespondWithFileAsync(ms, "operation.png");
+                await modal.FollowupWithFileAsync(ms, "operation.png");
             }
             else
             {
-                await modal.RespondAsync("Error", ephemeral: true);
+                await modal.FollowupAsync("Error", ephemeral: true);
                 Console.WriteLine("Unexpected type " + img.GetType());
             }
         }
