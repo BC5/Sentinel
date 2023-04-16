@@ -18,7 +18,7 @@ public class TaskHandler : InteractionModuleBase
     }
     
     
-    [SlashCommand("InvokeTask","Create image from template")]
+    [SlashCommand("invoketask","Create image from template")]
     public async Task InvokeTask(string task)
     {
         try
