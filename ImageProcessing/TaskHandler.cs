@@ -71,9 +71,11 @@ public class TaskHandler : InteractionModuleBase
         {
             string[] tasks = _assets.GetLibraryContents("operations", AssetManager.AssetType.Json);
             List<AutocompleteResult> results = new();
+            string user = (autocompleteInteraction.Data.Current.Value.ToString() ?? "").ToLower();
             foreach (string task in tasks)
             {
-                results.Add(new AutocompleteResult(task,task));
+                if(task.StartsWith(user) || user == "")
+                    results.Add(new AutocompleteResult(task,task));
             }
             return AutocompletionResult.FromSuccess(results.Take(25));
             
