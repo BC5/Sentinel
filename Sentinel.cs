@@ -253,6 +253,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(EconomyCommands), _services);
         await _interactions.AddModuleAsync(typeof(AdjustmentCommands), _services);
         await _interactions.AddModuleAsync(typeof(WipeCommands), _services);
+        await _interactions.AddModuleAsync(typeof(TaskHandler), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //reg commands
@@ -285,6 +286,15 @@ public class Sentinel
         _discord.UserJoined += NewMember;
         _discord.ReactionRemoved += DelReact;
         _discord.UserIsTyping += Typing;
+        _discord.ModalSubmitted += Modal;
+    }
+
+    private async Task Modal(SocketModal smodal)
+    {
+        if (smodal.Data.CustomId.Contains("task-"))
+        {
+            await TaskHandler.Execute(smodal,_assets);
+        }
     }
 
     private async Task Typing(Cacheable<IUser, ulong> u, Cacheable<IMessageChannel, ulong> c)

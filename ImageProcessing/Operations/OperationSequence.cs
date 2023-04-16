@@ -9,6 +9,7 @@ public class OperationSequence
 
     public AssetManager.AssetType InitialAssetType { get; set; } = AssetManager.AssetType.Image;
     public Dictionary<int, int> ArgumentAssigment { get; set; } = new();
+    public List<string> ArgumentNames { get; set; } = new();
     public List<OperationEntry> Operations { get; set; } = new();
     
     
