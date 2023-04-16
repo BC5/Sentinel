@@ -19,8 +19,11 @@ public class TaskHandler : InteractionModuleBase
     
     
     [SlashCommand("invoketask","Create image from template")]
-    public async Task InvokeTask(string task)
+    public async Task InvokeTask([Summary("task"), Autocomplete(typeof(TaskAutocompleteHandler))] string task)
     {
+        
+        //[Summary("parameter_name"), Autocomplete(typeof(ExampleAutocompleteHandler))]
+        
         try
         {
             string jsontext = File.ReadAllText(_assets.GetJsonPath("operations", task));
@@ -52,6 +55,28 @@ public class TaskHandler : InteractionModuleBase
         catch (Exception e)
         {
             await RespondAsync("Oopsie! " + e.Message);
+        }
+    }
+
+    public class TaskAutocompleteHandler : AutocompleteHandler
+    {
+        private AssetManager _assets;
+        public TaskAutocompleteHandler(AssetManager assets)
+        {
+            _assets = assets;
+        }
+        
+        public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction,
+            IParameterInfo parameter, IServiceProvider services)
+        {
+            string[] tasks = _assets.GetLibraryContents("operations", AssetManager.AssetType.Json);
+            List<AutocompleteResult> results = new();
+            foreach (string task in tasks)
+            {
+                results.Add(new AutocompleteResult(task,task));
+            }
+            return AutocompletionResult.FromSuccess(results.Take(25));
+            
         }
     }
 
