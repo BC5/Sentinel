@@ -57,7 +57,7 @@ public class TaskHandler : InteractionModuleBase
 
     public async static Task Execute(SocketModal modal, AssetManager assets)
     {
-        string taskId = modal.Data.CustomId.Substring(6);
+        string taskId = modal.Data.CustomId.Substring(5);
         
         string jsontext = File.ReadAllText(assets.GetJsonPath("operations", taskId));
         var opt = new JsonSerializerSettings();
