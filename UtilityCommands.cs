@@ -281,13 +281,19 @@ public class UtilityCommands : InteractionModuleBase
             await RespondAsync("Already indexing something. Try again later.");
         }
     }
-
-    [Discord.Interactions.RequireOwner]
+    
     [SlashCommand(name: "addquote", description: "Add a quote to the repository")]
     public async Task AddQuote(string quote)
     {
         var data = _core.GetDbContext();
         var srv = await data.GetServerConfig(Context.Guild.Id);
+        var usr = await data.GetServerUser(Context.User.Id, srv.DiscordID);
+
+        if (!usr.Authoritative)
+        {
+            await RespondAsync("minion ehh no gif");
+        }
+        
         if (srv.Quotes.Any(x => x.Text == quote))
         {
             await RespondAsync("Already added",ephemeral:true);
