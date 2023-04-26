@@ -198,8 +198,13 @@ public class NewMessageHandler
             {
                 if (msg is SocketUserMessage msg2)
                 {
-                    if (msg2.ReferencedMessage != null &&
-                        msg2.ReferencedMessage.Author.Id == _discord.CurrentUser.Id) break;
+                    if (msg2.ReferencedMessage != null)
+                    {
+                        if (msg2.ReferencedMessage.Author.Id == _discord.CurrentUser.Id && msg2.Author.Id == _discord.CurrentUser.Id)
+                        {
+                            break;
+                        }
+                    }
                     var quote = srv.GetRandomQuote();
 
                     quote = await _config.QuoteProcess(quote, sgu, user, _detention, srv, data);
