@@ -157,6 +157,7 @@ public class ModerationCommands : InteractionModuleBase
         }
     }
 
+    [RequireUserPermission(GuildPermission.ManageGuild)]
     [SlashCommand("purgeuser", "Remove a bunch of a user's messages")]
     public async Task PurgeUser(IGuildUser user, TimeSpan duration)
     {
