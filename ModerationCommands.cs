@@ -189,7 +189,7 @@ public class ModerationCommands : InteractionModuleBase
                     }
                 }
 
-                if (earliest.Timestamp < cutoff)
+                if (earliest.Timestamp > cutoff)
                 {
                     msgCollections = await Context.Channel.GetMessagesAsync(earliest, Direction.Before, 250).ToListAsync();
                 }
