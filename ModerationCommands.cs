@@ -161,41 +161,52 @@ public class ModerationCommands : InteractionModuleBase
     [SlashCommand("purgeuser", "Remove a bunch of a user's messages")]
     public async Task PurgeUser(IGuildUser user, TimeSpan duration)
     {
-        await DeferAsync();
-
-        DateTime cutoff = DateTime.Now - duration;
-        
-        var msgCollections = await Context.Channel.GetMessagesAsync(250).ToListAsync();
-
-        List<ulong> purgeList = new();
-        
-        IMessage? earliest = null;
-
-        while (earliest == null || earliest.Timestamp > cutoff)
+        try
         {
-            foreach (var msl in msgCollections)
-            {
-                foreach (IMessage msg in msl)
-                {
-                    if (earliest == null || msg.Timestamp < earliest.Timestamp) earliest = msg;
+            await DeferAsync();
 
-                    if (msg.Timestamp < cutoff) continue;
+            DateTime cutoff = DateTime.Now - duration;
+        
+            var msgCollections = await Context.Channel.GetMessagesAsync(250).ToListAsync();
+
+            List<ulong> purgeList = new();
+        
+            IMessage? earliest = null;
+            int loops = 0;
+            
+            while (loops == 0 || (loops < 10 && earliest.Timestamp > cutoff))
+            {
+                loops++;
+                foreach (var msl in msgCollections)
+                {
+                    foreach (IMessage msg in msl)
+                    {
+                        if (earliest == null || msg.Timestamp < earliest.Timestamp) earliest = msg;
+
+                        if (msg.Timestamp < cutoff) continue;
                 
-                    if (msg.Author.Id == user.Id) purgeList.Add(msg.Id);
+                        if (msg.Author.Id == user.Id) purgeList.Add(msg.Id);
+                    }
+                }
+
+                if (earliest.Timestamp < cutoff)
+                {
+                    msgCollections = await Context.Channel.GetMessagesAsync(earliest, Direction.Before, 250).ToListAsync();
                 }
             }
 
-            if (earliest.Timestamp < cutoff)
-            {
-                msgCollections = await Context.Channel.GetMessagesAsync(earliest, Direction.Before, 250).ToListAsync();
-            }
+            ITextChannel channel = (ITextChannel) Context.Channel;
+            await channel.DeleteMessagesAsync(purgeList);
+
+            await FollowupAsync($"Removed all messages from {user.Mention} in last {duration}");
+
         }
-
-        ITextChannel channel = (ITextChannel) Context.Channel;
-        await channel.DeleteMessagesAsync(purgeList);
-
-        await FollowupAsync($"Removed all messages from {user.Mention} in last {duration}");
-
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            await FollowupAsync(e.Message);
+            throw;
+        }
     }
 
 
