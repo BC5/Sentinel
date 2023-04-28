@@ -185,7 +185,7 @@ public class ModerationCommands : InteractionModuleBase
 
                         if (msg.Timestamp < cutoff) continue;
                 
-                        if (msg.Author.Id == user.Id) purgeList.Add(msg.Id);
+                        if (msg.Author.Id == user.Id && !purgeList.Contains(msg.Id)) purgeList.Add(msg.Id);
                     }
                 }
 
@@ -195,7 +195,7 @@ public class ModerationCommands : InteractionModuleBase
                 }
             }
             
-            Console.WriteLine("Earliest: " + earliest.Content);
+            Console.WriteLine("Earliest: " + earliest.GetJumpUrl());
 
             ITextChannel channel = (ITextChannel) Context.Channel;
             await channel.DeleteMessagesAsync(purgeList);
