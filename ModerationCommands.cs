@@ -198,7 +198,7 @@ public class ModerationCommands : InteractionModuleBase
             ITextChannel channel = (ITextChannel) Context.Channel;
             await channel.DeleteMessagesAsync(purgeList);
 
-            await FollowupAsync($"Removed all messages from {user.Mention} in last {duration}");
+            await FollowupAsync($"Removed {purgeList.Count} messages from {user.Mention} in last {duration}");
 
         }
         catch (Exception e)
