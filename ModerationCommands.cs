@@ -174,7 +174,7 @@ public class ModerationCommands : InteractionModuleBase
             IMessage? earliest = null;
             int loops = 0;
             
-            while (loops == 0 || (loops < 10 && earliest.Timestamp > cutoff))
+            while (loops == 0 || (loops < 20 && earliest.Timestamp > cutoff))
             {
                 loops++;
                 foreach (var msl in msgCollections)
@@ -200,7 +200,15 @@ public class ModerationCommands : InteractionModuleBase
             ITextChannel channel = (ITextChannel) Context.Channel;
             await channel.DeleteMessagesAsync(purgeList);
 
-            await FollowupAsync($"Removed {purgeList.Count} messages from {user.Mention} in last {duration}");
+            if (loops == 20)
+            {
+                await FollowupAsync($"Removed {purgeList.Count} messages from {user.Mention} in last {duration} before terminating due to too many messages (I only look back about 5000)");
+            }
+            else
+            {
+                await FollowupAsync($"Removed {purgeList.Count} messages from {user.Mention} in last {duration}, I think that's everything");
+            }
+            
 
         }
         catch (Exception e)
