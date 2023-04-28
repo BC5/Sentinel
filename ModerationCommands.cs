@@ -194,6 +194,8 @@ public class ModerationCommands : InteractionModuleBase
                     msgCollections = await Context.Channel.GetMessagesAsync(earliest, Direction.Before, 250).ToListAsync();
                 }
             }
+            
+            Console.WriteLine("Earliest: " + earliest.Content);
 
             ITextChannel channel = (ITextChannel) Context.Channel;
             await channel.DeleteMessagesAsync(purgeList);
