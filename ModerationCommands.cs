@@ -157,6 +157,46 @@ public class ModerationCommands : InteractionModuleBase
         }
     }
 
+    [SlashCommand("purgeuser", "Remove a bunch of a user's messages")]
+    public async Task PurgeUser(IGuildUser user, TimeSpan duration)
+    {
+        await DeferAsync();
+
+        DateTime cutoff = DateTime.Now - duration;
+        
+        var msgCollections = await Context.Channel.GetMessagesAsync(250).ToListAsync();
+
+        List<ulong> purgeList = new();
+        
+        IMessage? earliest = null;
+
+        while (earliest == null || earliest.Timestamp > cutoff)
+        {
+            foreach (var msl in msgCollections)
+            {
+                foreach (IMessage msg in msl)
+                {
+                    if (earliest == null || msg.Timestamp < earliest.Timestamp) earliest = msg;
+
+                    if (msg.Timestamp < cutoff) continue;
+                
+                    if (msg.Author.Id == user.Id) purgeList.Add(msg.Id);
+                }
+            }
+
+            if (earliest.Timestamp < cutoff)
+            {
+                msgCollections = await Context.Channel.GetMessagesAsync(earliest, Direction.Before, 250).ToListAsync();
+            }
+        }
+
+        ITextChannel channel = (ITextChannel) Context.Channel;
+        await channel.DeleteMessagesAsync(purgeList);
+
+        await FollowupAsync($"Removed all messages from {user.Mention} in last {duration}");
+
+    }
+
 
     [MessageCommand("Report")]
     public async Task Flag(IMessage msg)
