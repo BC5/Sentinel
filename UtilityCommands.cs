@@ -202,8 +202,15 @@ public class UtilityCommands : InteractionModuleBase
                     fc = cfg.GetFactcheck();
                 }
             }
+
+            string text = fc.Text;
             
-            await msg2.ReplyAsync(fc.Text);
+            if (text.Contains("<TRIGGERUSER>"))
+            {
+                text = text.Replace("<TRIGGERUSER>", Context.User.Mention);
+            }
+            
+            await msg2.ReplyAsync(text);
             return;
         }
 
