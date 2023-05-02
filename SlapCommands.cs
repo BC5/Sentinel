@@ -96,7 +96,7 @@ public class SlapCommands : InteractionModuleBase
     }
 
     [SlashCommand("reducemute",description:"Take 5 minutes off someone's mute duration")]
-    public async Task ReduceMute(IGuildUser targetuser)
+    public async Task ReduceMute(IGuildUser targetuser, int multiplier = 1)
     {
 
         if (targetuser.TimedOutUntil == null || targetuser.TimedOutUntil < DateTimeOffset.Now)
@@ -108,17 +108,23 @@ public class SlapCommands : InteractionModuleBase
         ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
         ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
 
-        if (user.Balance < srv.MuteCost)
+        if (multiplier < 1)
         {
-            await RespondAsync($"That would cost £{srv.MuteCost:n0} and you don't have enough", ephemeral: true);
+            await RespondAsync($"Multiplier {multiplier} is stupid and you should feel bad");
+            return;
+        }
+        
+        if (user.Balance < srv.MuteCost*multiplier)
+        {
+            await RespondAsync($"That would cost £{srv.MuteCost*multiplier:n0} and you don't have enough", ephemeral: true);
             return;
         }
 
         await DeferAsync();
         
-        var newtime = targetuser.TimedOutUntil - TimeSpan.FromMinutes(5);
+        var newtime = targetuser.TimedOutUntil - TimeSpan.FromMinutes(5*multiplier);
 
-        var status = await data.Transact(user, null, srv.MuteCost, Transaction.TxnType.Purchase);
+        var status = await data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
         await data.SaveChangesAsync();
 
         if (status != Transaction.TxnStatus.Success)
@@ -131,15 +137,15 @@ public class SlapCommands : InteractionModuleBase
         {
             await targetuser.RemoveTimeOutAsync(new RequestOptions() {AuditLogReason = $"Courtesy of {Context.User.Username}"});
             await Context.Interaction.FollowupAsync(
-                $"Ended {targetuser.Mention}'s mute\nCost:£{srv.MuteCost:n0}", ephemeral: false);
+                $"Ended {targetuser.Mention}'s mute\nCost:£{srv.MuteCost*multiplier:n0}", ephemeral: false);
             return;
         }
         
         var newtimespan = newtime - DateTimeOffset.Now;
         await targetuser.SetTimeOutAsync(newtimespan.Value,
-            new RequestOptions() {AuditLogReason = $"Took 5 minutes off, Courtesy of {Context.User.Username}"});
+            new RequestOptions() {AuditLogReason = $"Took {multiplier*5} minutes off, Courtesy of {Context.User.Username}"});
         await Context.Interaction.FollowupAsync(
-            $"Took 5 minutes off {targetuser.Mention}'s mute\nCost:£{srv.MuteCost:n0}", ephemeral: false);
+            $"Took {multiplier*5} minutes off {targetuser.Mention}'s mute\nCost:£{srv.MuteCost*multiplier:n0}", ephemeral: false);
     }
 
     [SlashCommand("nicklock",description:"Change someone's nickname and stop them from changing it back")]
@@ -213,13 +219,6 @@ public class SlapCommands : InteractionModuleBase
 
     }
 
-
-    [SlashCommand("shutup",description:"Mute someone for 5 minutes")]
-    public async Task ShutUpSlashCommand(IGuildUser target)
-    {
-        await ShutUp(target);
-    }
-
     [SlashCommand("francophone",description:"Parlez Français. C’est obligatoire.")]
     public async Task Francophone(IGuildUser target)
     {
@@ -269,9 +268,15 @@ public class SlapCommands : InteractionModuleBase
         await data.SaveChangesAsync();
 
     }
-    
+
     [UserCommand("Shut Up")]
-    public async Task ShutUp(IGuildUser target)
+    public async Task ShutUpContext(IGuildUser target)
+    {
+        await ShutUpSlash(target);
+    }
+    
+    [SlashCommand("shutup",description:"Mute someone for 5 minutes")]
+    public async Task ShutUpSlash(IGuildUser target, int multiplier = 1)
     {
         try
         {
@@ -287,10 +292,16 @@ public class SlapCommands : InteractionModuleBase
             }
             
             if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
-            
-            if (user.Balance < srv.MuteCost)
+
+            if (multiplier < 1)
             {
-                await Context.Interaction.RespondAsync($"You don't have the funds for that\nCost: £{srv.MuteCost:n0}\nBalance: £{user.Balance:n0}", ephemeral: true);
+                await RespondAsync($"Multiplier {multiplier} is stupid and you should feel bad");
+                return;
+            }
+            
+            if (user.Balance < (srv.MuteCost*multiplier))
+            {
+                await Context.Interaction.RespondAsync($"You don't have the funds for that\nCost: £{srv.MuteCost*multiplier:n0}\nBalance: £{user.Balance:n0}", ephemeral: true);
                 return;
             }
 
@@ -308,34 +319,34 @@ public class SlapCommands : InteractionModuleBase
             
             if (target.TimedOutUntil == null || target.TimedOutUntil < DateTimeOffset.Now)
             {
-                await target.SetTimeOutAsync(TimeSpan.FromMinutes(5),
+                await target.SetTimeOutAsync(TimeSpan.FromMinutes(5*multiplier),
                     new RequestOptions() {AuditLogReason = $"Courtesy of {Context.User.Username}"});
                 if (deflected)
                 {
-                    await Context.Interaction.FollowupAsync($"Muted {target.Mention} for five minutes ({ogtarget.Mention} had a deflector)\nCost:£{srv.MuteCost:n0}", ephemeral: false);
+                    await Context.Interaction.FollowupAsync($"Muted {target.Mention} for {5*multiplier} minutes ({ogtarget.Mention} had a deflector)\nCost:£{srv.MuteCost*multiplier:n0}", ephemeral: false);
                 }
                 else
                 {
-                    await Context.Interaction.FollowupAsync($"Muted {target.Mention} for five minutes\nCost:£{srv.MuteCost:n0}", ephemeral: false);
+                    await Context.Interaction.FollowupAsync($"Muted {target.Mention} for {5*multiplier} minutes\nCost:£{srv.MuteCost*multiplier:n0}", ephemeral: false);
                 }
             }
             else
             {
-                var time = target.TimedOutUntil + TimeSpan.FromMinutes(5);
+                var time = target.TimedOutUntil + TimeSpan.FromMinutes(5*multiplier);
                 var newtimespan = time - DateTimeOffset.Now;
                 await target.SetTimeOutAsync(newtimespan.Value,
                     new RequestOptions() {AuditLogReason = $"Courtesy of {Context.User.Username}"});
                 await Context.Interaction.FollowupAsync(
-                    $"Added 5 more minutes to {target.Mention}'s mute <:troll:1019348578113699911>\nCost:£{srv.MuteCost:n0}", ephemeral: false);
+                    $"Added {5*multiplier} more minutes to {target.Mention}'s mute <:troll:1019348578113699911>\nCost:£{srv.MuteCost*multiplier:n0}", ephemeral: false);
             }
 
             if (deflected)
             {
-                var status = await data.Transact(targetsu, null, srv.MuteCost, Transaction.TxnType.Purchase);
+                var status = await data.Transact(targetsu, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
             }
             else
             {
-                var status = await data.Transact(user, null, srv.MuteCost, Transaction.TxnType.Purchase);
+                var status = await data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
             }
             
             await data.SaveChangesAsync();
