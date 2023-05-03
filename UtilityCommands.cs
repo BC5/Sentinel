@@ -299,6 +299,7 @@ public class UtilityCommands : InteractionModuleBase
         if (!usr.Authoritative)
         {
             await RespondAsync("minion ehh no gif");
+            return;
         }
         
         if (srv.Quotes.Any(x => x.Text == quote))
