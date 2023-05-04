@@ -643,7 +643,7 @@ public class Sentinel
         {
             if(!messages.Contains(v.PollId)) messages.Add(v.PollId);
         }
-
+        
         foreach (var poll in messages)
         {
             var votes = PendingVotes.Where(x => x.PollId == poll).ToList();
@@ -657,6 +657,7 @@ public class Sentinel
             {
                 if (v.ContainsKey(vote.Option)) v[vote.Option]++;
                 else v.Add(vote.Option,1);
+                PendingVotes.Remove(vote);
             }
 
             var eb = new EmbedBuilder();
@@ -670,7 +671,7 @@ public class Sentinel
                 eb.AddField(field.Name, $"Votes: {tally}");
                 i++;
             }
-
+            
             await msg.ModifyAsync(x => x.Embed = eb.Build());
         }
     }
