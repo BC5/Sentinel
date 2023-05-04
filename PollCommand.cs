@@ -73,36 +73,12 @@ public class PollCommand : InteractionModuleBase
                 await RespondAsync("You can't vote twice or change your vote.", ephemeral: true);
                 return;
             }
+
+            var vote = new Sentinel.PendingAnonpollVote(msg.Id, msg.Channel.Id, i);
+            _core.PendingVotes.Add(vote);
             
-            await msg.ModifyAsync(x =>
-            {
-                var oldembed = msg.Embeds.First();
-                var oldvotefield = oldembed.Fields[i].Value;
-                Console.WriteLine(oldvotefield);
-                int votes = int.Parse(oldvotefield.Replace("Votes: ", ""));
-                votes++;
-
-                var eb = new EmbedBuilder();
-                eb.WithTitle(oldembed.Title);
-                eb.WithFooter(oldembed.Footer?.Text);
-                int j = 0;
-                foreach (var field in oldembed.Fields)
-                {
-                    if (j == i)
-                    {
-                        eb.AddField(field.Name, $"Votes: {votes}");
-                    }
-                    else
-                    {
-                        eb.AddField(field.Name, field.Value);
-                    }
-
-                    j++;
-                }
-                x.Embed = eb.Build();
-            });
             await data.RecordVote(msg.Id, Context.User.Id);
-            await RespondAsync("Vote Recorded", ephemeral:true);
+            await RespondAsync("Vote Recorded. It may take a few seconds to appear.", ephemeral:true);
         }
         catch (Exception e)
         {

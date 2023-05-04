@@ -10,6 +10,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Sentinel.Archivist;
 using Sentinel.ImageProcessing;
@@ -526,6 +527,7 @@ public class Sentinel
         if (_ticks % 5 == 3)
         {
             await _deleter.Delete();
+            await AnonPollUpdate();
         }
         
         //Every second
@@ -631,6 +633,60 @@ public class Sentinel
             AddDays = new Regex(@"<@!?(\d+)> add (\d+) days?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             TwitterId = new Regex(@":\/\/twitter.com\/.+\/status\/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
+    }
+
+    public List<PendingAnonpollVote> PendingVotes = new();
+    private async Task AnonPollUpdate()
+    {
+        List<ulong> messages = new();
+        foreach (var v in PendingVotes)
+        {
+            if(!messages.Contains(v.PollId)) messages.Add(v.PollId);
+        }
+
+        foreach (var poll in messages)
+        {
+            var votes = PendingVotes.Where(x => x.PollId == poll).ToList();
+            var channel = (ITextChannel) await _discord.GetChannelAsync(votes[0].PollChannel);
+            var msg = (SocketUserMessage) await channel.GetMessageAsync(poll);
+            
+            var oldembed = msg.Embeds.First();
+
+            Dictionary<int, int> v = new();
+            foreach (var vote in votes)
+            {
+                if (v.ContainsKey(vote.Option)) v[vote.Option]++;
+                else v.Add(vote.Option,1);
+            }
+
+            var eb = new EmbedBuilder();
+            eb.WithTitle(oldembed.Title);
+            eb.WithFooter(oldembed.Footer?.Text);
+            int i = 0;
+            foreach (var field in oldembed.Fields)
+            {
+                int tally = int.Parse(field.Value.Replace("Votes: ", ""));
+                if (v.ContainsKey(i)) tally = tally + v[i];
+                eb.AddField(field.Name, $"Votes: {tally}");
+                i++;
+            }
+
+            await msg.ModifyAsync(x => x.Embed = eb.Build());
+        }
+    }
+
+    public class PendingAnonpollVote
+    {
+        public PendingAnonpollVote(ulong pollid, ulong pollchannel, int option)
+        {
+            PollId = pollid;
+            PollChannel = pollchannel;
+            Option = option;
+        }
+        
+        public ulong PollId;
+        public ulong PollChannel;
+        public int Option;
     }
     
 }
