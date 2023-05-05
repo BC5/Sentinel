@@ -532,6 +532,7 @@ public class Sentinel
         
         //Every second
         await _ocr.TryNext();
+        await JuveChecks();
     }
     
 
@@ -689,5 +690,18 @@ public class Sentinel
         public ulong PollChannel;
         public int Option;
     }
-    
+
+    public List<IMessage> PendingJuvechecks = new();
+
+    private async Task JuveChecks()
+    {
+        foreach (var message in PendingJuvechecks)
+        {
+            if(message is not SocketUserMessage) continue;
+            var msg = (SocketUserMessage) message;
+            await msg.ReplyAsync("Oops! Looks like you posted an image which did not contain the text \"JUVE\".");
+            await msg.DeleteAsync();
+        }
+    }
+
 }

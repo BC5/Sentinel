@@ -59,6 +59,9 @@ public class NewMessageHandler
         //Attitude
         await Attitude(msg, user.SentinelAttitude);
 
+        //Check for "JUVE"
+        if (user.Juvecheck) await JuveCheck(msg);
+
         //AntiChristmas
         //await AntiChristmas(msg);
         
@@ -79,6 +82,34 @@ public class NewMessageHandler
 
         //Await voicenote
         await voiceNote;
+    }
+
+    private async Task JuveCheck(SocketMessage msg)
+    {
+        bool failed = false;
+        foreach (var embed in msg.Embeds)
+        {
+            if (embed.Type == EmbedType.Video)
+            {
+                failed = true;
+            }
+        }
+
+        foreach (var attachment in msg.Attachments)
+        {
+            if (attachment.ContentType.ToLower().Contains("video"))
+            {
+                failed = true;
+            }
+        }
+
+        if (failed)
+        {
+            var message = (SocketUserMessage) msg;
+            await message.ReplyAsync("Oops. I can't check that file for the text \"JUVE\". I can't let you post things without juve in them now can I?");
+            await message.DeleteAsync();
+        }
+        
     }
 
     private async Task StashVoiceNote(SocketMessage msg)

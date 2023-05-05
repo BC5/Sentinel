@@ -105,6 +105,24 @@ public class ModerationCommands : InteractionModuleBase
         }
         
     }
+
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("juvelock","Better post juve.")]
+    public async Task JuveCheck(IGuildUser user)
+    {
+        var data = _sentinel.GetDbContext();
+        ServerUser su = await data.GetServerUser(user);
+        su.Juvecheck = !su.Juvecheck;
+        if (su.Juvecheck)
+        {
+            await RespondAsync($"{user.Mention} post juve.");
+        }
+        else
+        {
+            await RespondAsync($"{user.Mention} juve is optional. for now...");
+        }
+        await data.SaveChangesAsync();
+    }
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("unidiot","Release a user from idiotdom")]

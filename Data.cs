@@ -241,6 +241,7 @@ public class ServerUser
     public bool Censored { get; set; } = false;
     public bool Immune { get; set; } = false;
     public bool Francophone { get; set; } = false;
+    public bool Juvecheck { get; set; } = false;
     public string RoleBackup { get; set; } = "";
     public DateTime? IdiotedUntil { get; set; }
     public DateTime? DeflectorExpiry { get; set; }

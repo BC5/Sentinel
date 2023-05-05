@@ -147,6 +147,7 @@ public class OCRManager
             if (results.Count > 0)
             {
                 Console.WriteLine("Already indexed message. Skipping.");
+                await PostProcess(msg);
                 return;
             }
             
@@ -167,6 +168,27 @@ public class OCRManager
                 else if(embed.Image.HasValue)
                 {
                     await DoOCR(msg, channel, embed.Image.Value.Url);
+                }
+            }
+            
+            await PostProcess(msg);
+        }
+    }
+
+    public async Task PostProcess(IMessage msg)
+    {
+        var data = _core.GetDbContext();
+        var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
+        var su = await data.GetServerUser(msg.Author.Id, ((IGuildChannel) msg.Channel).GuildId);
+
+        if (su.Juvecheck)
+        {
+            foreach (var r in results)
+            {
+                if (!r.Text.ToUpper().Contains("JUVE"))
+                {
+                    _core.PendingJuvechecks.Add(msg);
+                    break;
                 }
             }
         }
