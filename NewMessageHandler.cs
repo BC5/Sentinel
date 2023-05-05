@@ -103,6 +103,11 @@ public class NewMessageHandler
             }
         }
 
+        if (msg.Content.ToLower().Contains("http") && (msg.Content.ToLower().Contains(".mp4") || msg.Content.ToLower().Contains(".webm")))
+        {
+            failed = true;
+        }
+
         if (failed)
         {
             var message = (SocketUserMessage) msg;
