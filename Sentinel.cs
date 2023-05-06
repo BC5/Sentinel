@@ -695,12 +695,19 @@ public class Sentinel
 
     private async Task JuveChecks()
     {
+        List<IMessage> Processed = new();
         foreach (var message in PendingJuvechecks)
         {
+            Processed.Add(message);
             if(message is not SocketUserMessage) continue;
             var msg = (SocketUserMessage) message;
             await msg.ReplyAsync("Oops! Looks like you posted an image which did not contain the text \"JUVE\".");
             await msg.DeleteAsync();
+        }
+
+        foreach (var a in Processed)
+        {
+            PendingJuvechecks.Remove(a);
         }
     }
 
