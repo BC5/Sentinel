@@ -179,12 +179,22 @@ public class UtilityCommands : InteractionModuleBase
     {
         var data = _core.GetDbContext();
         var srvtsk = data.GetServerConfig(Context.Guild.Id);
+        var usrtsk = data.GetServerUser((SocketGuildUser) Context.User);
         var md5 = MD5.Create();
         var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(msg.Content.ToLower()));
         int seed = BitConverter.ToInt32(hash);
         var srv = await srvtsk;
-        
-        if (msg is IUserMessage msg2)
+        var usr = await usrtsk;
+
+        if (usr.Balance < srv.FactcheckCost)
+        {
+            await RespondAsync($"Brokie. Can't even afford a factcheck lmao (£{srv.FactcheckCost:n0})");
+            return;
+        }
+
+        var txn = await data.Transact(usr, null, srv.FactcheckCost, Transaction.TxnType.Purchase);
+
+        if (msg is IUserMessage msg2 && txn == Transaction.TxnStatus.Success)
         {
             await RespondAsync("✅",ephemeral:true);
 

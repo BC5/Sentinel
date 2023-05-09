@@ -317,6 +317,7 @@ public class ServerConfig
     public int CostDe1984 { get; set; } = 100;
     public int CostWarn { get; set; } = 50;
     public int FrenchCost { get; set; } = 250;
+    public int FactcheckCost { get; set; } = 25;
     public float RewardChance { get; set; } = 0.10f;
     public int RewardSize { get; set; } = 5;
     public bool FunnyCommands { get; set; } = false;
