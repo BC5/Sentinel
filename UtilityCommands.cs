@@ -177,15 +177,18 @@ public class UtilityCommands : InteractionModuleBase
     [MessageCommand("FactCheck")]
     public async Task FactCheck(IMessage msg)
     {
+        var data = _core.GetDbContext();
+        var srvtsk = data.GetServerConfig(Context.Guild.Id);
         var md5 = MD5.Create();
         var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(msg.Content.ToLower()));
         int seed = BitConverter.ToInt32(hash);
+        var srv = await srvtsk;
         
         if (msg is IUserMessage msg2)
         {
             await RespondAsync("✅",ephemeral:true);
 
-            if (msg.Channel.Id == 1021889219209211904)
+            if (msg.Channel.Id == srv.FrenchChannel)
             {
                 await msg2.ReplyAsync("**VÉRIFIÉ PAR DE VRAIS PATRIOTES FRANÇAIS:** JE ME RENDS");
                 return;
