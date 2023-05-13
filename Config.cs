@@ -18,6 +18,7 @@ public class Config
     public bool GlobalMode { get; set; } = false;
     public ulong[] Servers { get; set; } = Array.Empty<ulong>();
     public string[] Statuses { get; set; } = Array.Empty<string>();
+    public ulong[] UserBlacklist { get; set; } = Array.Empty<ulong>();
     public List<FactCheck> FactChecks { get; set; } = new();
     public List<string> BelligerentResponses { get; set; } = new();
     public string DataDirectory { get; set; } = @"./data";

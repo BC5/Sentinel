@@ -606,6 +606,12 @@ public class Sentinel
     {
         try
         {
+            if (_config.UserBlacklist.Contains(i.User.Id))
+            {
+                await i.RespondAsync("Your account has been blacklisted.",ephemeral: true);
+                return;
+            }
+            
             var ctx = new SocketInteractionContext(_discord, i);
             var result = await _interactions.ExecuteCommandAsync(ctx, _services);
 
