@@ -40,7 +40,7 @@ public class ElectionCommand : InteractionModuleBase
         await RespondWithModalAsync<BallotModal>($"stl-ballot-{d.Message.Id}");
     }
 
-    [ModalInteraction("stl-ballot-*")]
+    [ModalInteraction("stl-ballot-*",ignoreGroupNames:true)]
     public async Task VoteModal(BallotModal modal, ulong id)
     {
         try
