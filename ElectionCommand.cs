@@ -55,7 +55,9 @@ public class ElectionCommand : InteractionModuleBase
         {
             var msg = await Context.Channel.GetMessageAsync(id);
             string m = msg.Content;
+            Console.WriteLine($"content: {m}");
             Console.WriteLine(_regexes.Candidates.Match(m).Groups[0].Value);
+            Console.WriteLine(_regexes.Candidates.Match(m).Groups[1].Value);
             string[] options = _regexes.Candidates.Match(m).Groups[0].Value.Split(",");
             int voteCount = int.Parse(_regexes.VoteCount.Match(m).Groups[0].Value);
 
