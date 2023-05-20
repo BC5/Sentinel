@@ -54,6 +54,7 @@ public class SentinelEvents
                 if (e is NullReferenceException nre)
                 {
                     Console.WriteLine($"NullReference: {nre.InnerException}");
+                    Console.WriteLine(e);
                 }
                 else
                 {
