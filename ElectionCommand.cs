@@ -30,14 +30,22 @@ public class ElectionCommand : InteractionModuleBase
     [ComponentInteraction("stl-vote",ignoreGroupNames:true)]
     public async Task VoteButton()
     {
-        var d = (IComponentInteraction) Context.Interaction;
-        var data = _sentinel.GetDbContext();
-        var existing = await data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == d.Message.Id && x.VoterId == Context.User.Id);
-        if (existing != null)
+        try
         {
-            await RespondAsync("You have already voted.",ephemeral: true);
+            var d = (IComponentInteraction) Context.Interaction;
+            var data = _sentinel.GetDbContext();
+            var existing = await data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == d.Message.Id && x.VoterId == Context.User.Id);
+            if (existing != null)
+            {
+                await RespondAsync("You have already voted.",ephemeral: true);
+            }
+            await RespondWithModalAsync<BallotModal>($"stl-ballot-{d.Message.Id}");
         }
-        await RespondWithModalAsync<BallotModal>($"stl-ballot-{d.Message.Id}");
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     [ModalInteraction("stl-ballot-*",ignoreGroupNames:true)]
