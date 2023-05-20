@@ -255,6 +255,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(AdjustmentCommands), _services);
         await _interactions.AddModuleAsync(typeof(WipeCommands), _services);
         await _interactions.AddModuleAsync(typeof(TaskHandler), _services);
+        await _interactions.AddModuleAsync(typeof(ElectionCommand), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //reg commands
