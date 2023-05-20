@@ -633,12 +633,16 @@ public class Sentinel
         public Regex NewIdiot;
         public Regex AddDays;
         public Regex TwitterId;
+        public Regex Candidates;
+        public Regex VoteCount;
         
         public Regexes()
         {
             NewIdiot = new Regex(@"new <@&(\d+)>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             AddDays = new Regex(@"<@!?(\d+)> add (\d+) days?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             TwitterId = new Regex(@":\/\/twitter.com\/.+\/status\/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Candidates = new Regex(@"(?:Candidates: )((?:[A-Z]{3}[,\n])+)", RegexOptions.Compiled);
+            VoteCount = new Regex(@"\*\*([\d]+)\*\* votes.", RegexOptions.Compiled);
         }
     }
 

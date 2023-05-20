@@ -22,6 +22,7 @@ public class Data : DbContext
     public DbSet<ServerWarns> Warns { get; set; }
     public DbSet<Reaction> ReactLog { get; set; }
     public DbSet<OCREntry> OcrEntries { get; set; }
+    public DbSet<ElectionBallot> Ballots { get; set; }
 
     [NotMapped]
     public string DbPath { get; }
@@ -423,6 +424,15 @@ public class AutoResponse
         }
     }
     
+}
+
+public class ElectionBallot
+{
+    [Key]
+    public int BallotId { get; set; }
+    public ulong ElectionId { get; set; }
+    public ulong VoterId { get; set; }
+    public string Ballot { get; set; } = "";
 }
 
 public class CensorEntry
