@@ -49,13 +49,10 @@ public class ElectionCommand : InteractionModuleBase
     }
 
     [ModalInteraction("stl-ballot-*",ignoreGroupNames:true)]
-    public async Task VoteModal(BallotModal modal)
+    public async Task VoteModal(ulong id, BallotModal modal) //MODAL OBJECT **MUST** BE LAST PARAM
     {
         try
         {
-            string customid = ((IModalInteraction) Context.Interaction).Data.CustomId;
-            ulong id = ulong.Parse(customid.Substring(11));
-            
             var msg = await Context.Channel.GetMessageAsync(id);
             string m = msg.Content;
             Console.WriteLine(_regexes.Candidates.Match(m).Groups[0].Value);
