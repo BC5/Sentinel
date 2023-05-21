@@ -642,8 +642,8 @@ public class Sentinel
             NewIdiot = new Regex(@"new <@&(\d+)>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             AddDays = new Regex(@"<@!?(\d+)> add (\d+) days?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             TwitterId = new Regex(@":\/\/twitter.com\/.+\/status\/(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Candidates = new Regex(@"(?:Candidates: )((?:[A-Z]{3}[,\n])+)", RegexOptions.Compiled);
-            VoteCount = new Regex(@"\*\*([\d]+)\*\* votes.", RegexOptions.Compiled);
+            Candidates = new Regex(@"(?:Candidates: )((?:[A-Z]+[,\n])+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            VoteCount = new Regex(@"\*\*([\d]+)\*\* votes.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
     }
 

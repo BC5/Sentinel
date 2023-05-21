@@ -38,6 +38,7 @@ public class ElectionCommand : InteractionModuleBase
             if (existing != null)
             {
                 await RespondAsync("You have already voted.",ephemeral: true);
+                return;
             }
             await RespondWithModalAsync<BallotModal>($"stl-ballot-{d.Message.Id}");
         }
@@ -53,18 +54,17 @@ public class ElectionCommand : InteractionModuleBase
     {
         try
         {
+            await DeferAsync(ephemeral: true);
+            
             var msg = await Context.Channel.GetMessageAsync(id);
-            string m = msg.Content;
-            Console.WriteLine($"content: {m}");
-            Console.WriteLine(_regexes.Candidates.Match(m).Groups[0].Value);
-            Console.WriteLine(_regexes.Candidates.Match(m).Groups[1].Value);
-            string[] options = _regexes.Candidates.Match(m).Groups[0].Value.Split(",");
-            int voteCount = int.Parse(_regexes.VoteCount.Match(m).Groups[0].Value);
-
+            string m = msg.Content.ToUpper();
+            var groups = _regexes.Candidates.Match(m).Groups;
+            string[] options = _regexes.Candidates.Match(m).Groups[1].Value.Trim().Split(",");
+            int voteCount = int.Parse(_regexes.VoteCount.Match(m).Groups[1].Value);
             string[] ballot = modal.Vote.Split(",");
             if (ballot.Length != voteCount)
             {
-                await RespondAsync($"Invalid ballot: You must vote for exactly {voteCount} candidates.",ephemeral: true);
+                await FollowupAsync($"Invalid ballot: You must vote for exactly {voteCount} candidates.",ephemeral: true);
                 return;
             }
 
@@ -75,7 +75,7 @@ public class ElectionCommand : InteractionModuleBase
             
             if (ballot.Distinct().Count() != ballot.Length)
             {
-                await RespondAsync($"Invalid ballot: You have voted for a single candidate more than once", ephemeral: true);
+                await FollowupAsync($"Invalid ballot: You have voted for a single candidate more than once", ephemeral: true);
                 return;
             }
             
@@ -83,7 +83,7 @@ public class ElectionCommand : InteractionModuleBase
             {
                 if (!options.Contains(x))
                 {
-                    await RespondAsync($"Invalid ballot: {x} is not a valid option", ephemeral: true);
+                    await FollowupAsync($"Invalid ballot: {x} is not a valid option", ephemeral: true);
                     return;
                 }
             }
@@ -99,7 +99,7 @@ public class ElectionCommand : InteractionModuleBase
             var existing = await data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == b.ElectionId && x.VoterId == b.VoterId);
             if (existing != null)
             {
-                await RespondAsync($"You have already voted.", ephemeral: true);
+                await FollowupAsync($"You have already voted.", ephemeral: true);
                 return;
             }
 
@@ -121,7 +121,7 @@ public class ElectionCommand : InteractionModuleBase
             }
             await db;
             await data.SaveChangesAsync();
-            await RespondAsync("Vote Recorded",ephemeral: true);
+            await FollowupAsync("Vote Recorded",ephemeral: true);
 
         }
         catch (Exception e)
