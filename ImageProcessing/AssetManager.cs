@@ -28,6 +28,11 @@ public class AssetManager
         Content? content = await Content.FromUrl(x);
         return content;
     }
+
+    public string getAssetDirectory()
+    {
+        return _assetDirectory;
+    }
     
     public static async Task<string?> GetLastEmbed(IMessageChannel textChannel)
     {

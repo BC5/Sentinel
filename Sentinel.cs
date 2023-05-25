@@ -256,6 +256,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(WipeCommands), _services);
         await _interactions.AddModuleAsync(typeof(TaskHandler), _services);
         await _interactions.AddModuleAsync(typeof(ElectionCommand), _services);
+        await _interactions.AddModuleAsync(typeof(RebuildCommand), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //reg commands
@@ -527,13 +528,31 @@ public class Sentinel
         //Every 5 seconds
         if (_ticks % 5 == 3)
         {
+            var r = Rebuild();
             await _deleter.Delete();
             await AnonPollUpdate();
+            await r;
         }
         
         //Every second
         await _ocr.TryNext();
         await JuveChecks();
+    }
+
+    public List<RebuildCommand.RebuildTask> RebuildTasks = new();
+    private async Task Rebuild()
+    {
+        if (RebuildTasks.Count > 0)
+        {
+            if (RebuildTasks[0].IsComplete())
+            {
+                RebuildTasks.Remove(RebuildTasks[0]);
+            }
+            else
+            {
+                await RebuildTasks[0].Next();
+            }
+        }
     }
     
 
