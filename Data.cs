@@ -328,7 +328,9 @@ public class ServerConfig
     public ulong? IdiotRole { get; set; }
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
     public ulong? FrenchChannel { get; set; }
-    
+    public int SlotsPayout { get; set; } = 100;
+    public int SlotsFee { get; set; } = 25;
+
     public string GetRandomQuote()
     {
         if (Quotes.Count == 0) return "brain empty 😭. fill me with nonsense.";
@@ -489,7 +491,8 @@ public class Transaction
         Purchase,
         Theft,
         Tax,
-        StartingBalance
+        StartingBalance,
+        CasinoSlots
     }
 
     public enum TxnStatus

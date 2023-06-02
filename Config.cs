@@ -25,6 +25,29 @@ public class Config
     public List<AutoResponse> AutoResponses { get; set; } = new();
     public List<ProcedureScheduler.ScheduledProcedure> ProcedureSchedule { get; set; } = new();
 
+    public List<SlotsEmote> SlotsEmotes { get; set; } = new List<SlotsEmote>() {
+        new SlotsEmote("7️⃣",10),new SlotsEmote("🍋",1),
+        new SlotsEmote("🍓",10),new SlotsEmote("🔔",1),
+        new SlotsEmote("🍀",10),new SlotsEmote("🍇",1),
+        new SlotsEmote("🍒",10),new SlotsEmote("💎",1),
+        new SlotsEmote("🍉",10),new SlotsEmote("🧲",1),
+        new SlotsEmote("🎰",10),new SlotsEmote("🍆",1)
+    };
+
+    public class SlotsEmote
+    {
+        public SlotsEmote() {}
+
+        public SlotsEmote(string emote, int value)
+        {
+            this.emote = emote;
+            this.value = value;
+        }
+        
+        public int value { get; set; } = 0;
+        public string emote { get; set; } = "🤑";
+    }
+    
 
     public string GetStatus()
     {

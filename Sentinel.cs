@@ -241,6 +241,7 @@ public class Sentinel
         srv.AddSingleton(_regexes);
         srv.AddSingleton(_deleter);
         srv.AddSingleton(_textcat);
+        srv.AddSingleton(_random);
         _services = srv.BuildServiceProvider();
         
         //add commands
@@ -257,6 +258,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(TaskHandler), _services);
         await _interactions.AddModuleAsync(typeof(ElectionCommand), _services);
         await _interactions.AddModuleAsync(typeof(RebuildCommand), _services);
+        await _interactions.AddModuleAsync(typeof(CasinoModule), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //reg commands
