@@ -30,6 +30,11 @@ public class Data : DbContext
     {
         
     }
+
+    public Data(DbContextOptions<Data> options) : base(options)
+    {
+        
+    }
     
     public Data(string file)
     {
