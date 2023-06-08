@@ -10,12 +10,14 @@ public class ModerationCommands : InteractionModuleBase
     private AutoMod _autoMod;
     private Sentinel _sentinel;
     private Detention _detention;
+    private Data _data;
     
-    public ModerationCommands(AutoMod am, Sentinel sentinel, Detention detention)
+    public ModerationCommands(AutoMod am, Sentinel sentinel, Detention detention, Data data)
     {
         _autoMod = am;
         _sentinel = sentinel;
         _detention = detention;
+        _data = data;
     }
 
     /*
@@ -57,11 +59,10 @@ public class ModerationCommands : InteractionModuleBase
     public async Task Idiot(IGuildUser user, float duration, bool hours = false)
     {
         await DeferAsync();
-        var data = _sentinel.GetDbContext();
         try
         {
-            ServerUser su = await data.GetServerUser(user);
-            ServerConfig scfg = await data.GetServerConfig(user.GuildId);
+            ServerUser su = await _data.GetServerUser(user);
+            ServerConfig scfg = await _data.GetServerConfig(user.GuildId);
 
             if (!scfg.IdiotRole.HasValue)
             {
@@ -71,8 +72,8 @@ public class ModerationCommands : InteractionModuleBase
 
             TimeSpan durationts = hours ? TimeSpan.FromHours(duration) : TimeSpan.FromDays(duration);
             
-            await _detention.ModifySentence(user, durationts, data);
-            await data.SaveChangesAsync();
+            await _detention.ModifySentence(user, durationts, _data);
+            await _data.SaveChangesAsync();
             if (durationts > TimeSpan.Zero)
             {
                 if (durationts > TimeSpan.FromHours(23))
@@ -110,8 +111,7 @@ public class ModerationCommands : InteractionModuleBase
     [SlashCommand("juvelock","Better post juve.")]
     public async Task JuveCheck(IGuildUser user)
     {
-        var data = _sentinel.GetDbContext();
-        ServerUser su = await data.GetServerUser(user);
+        ServerUser su = await _data.GetServerUser(user);
         su.Juvecheck = !su.Juvecheck;
         if (su.Juvecheck)
         {
@@ -121,7 +121,7 @@ public class ModerationCommands : InteractionModuleBase
         {
             await RespondAsync($"{user.Mention} juve is optional. for now...");
         }
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
     }
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
@@ -130,9 +130,8 @@ public class ModerationCommands : InteractionModuleBase
     {
         try
         {
-            var data = _sentinel.GetDbContext();
-            ServerUser su = await data.GetServerUser(user);
-            ServerConfig scfg = await data.GetServerConfig(user.GuildId);
+            ServerUser su = await _data.GetServerUser(user);
+            ServerConfig scfg = await _data.GetServerConfig(user.GuildId);
 
             if (!scfg.IdiotRole.HasValue)
             {
@@ -147,7 +146,7 @@ public class ModerationCommands : InteractionModuleBase
             }
             
             await _detention.Unidiot(user, su, scfg.IdiotRole.Value);
-            await data.SaveChangesAsync();
+            await _data.SaveChangesAsync();
             await RespondAsync($"{user.Mention} no longer an <@&{scfg.IdiotRole.Value}>!");
         }
         catch (Exception e)
@@ -161,8 +160,7 @@ public class ModerationCommands : InteractionModuleBase
     [SlashCommand("idiotdays","How many days do they have left in detention?")]
     public async Task DaysRemaining(IGuildUser user)
     {
-        var data = _sentinel.GetDbContext();
-        ServerUser su = await data.GetServerUser(user);
+        ServerUser su = await _data.GetServerUser(user);
         if (su.IdiotedUntil != null && su.IdiotedUntil > DateTime.Now)
         {
             DateTimeOffset tsdto = su.IdiotedUntil.Value;

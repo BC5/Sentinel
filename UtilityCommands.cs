@@ -17,12 +17,14 @@ public class UtilityCommands : InteractionModuleBase
     private Sentinel _core;
     private OCRManager _ocr;
     private ProcedureScheduler _procSched;
+    private Data _data;
 
-    public UtilityCommands(Sentinel sentinel, OCRManager ocr, ProcedureScheduler procSched)
+    public UtilityCommands(Sentinel sentinel, OCRManager ocr, ProcedureScheduler procSched, Data data)
     {
         _core = sentinel;
         _ocr = ocr;
         _procSched = procSched;
+        _data = data;
     }
 
     [Discord.Interactions.RequireOwner]
@@ -109,8 +111,7 @@ public class UtilityCommands : InteractionModuleBase
     [SlashCommand(name: "warnings", description: "See a user's warnings")]
     public async Task Warnings(IGuildUser user)
     {
-        var data = _core.GetDbContext();
-        List<ServerWarns> warns = await data.Warns.Where(w => w.serverid == Context.Guild.Id && w.warned == user.Id).ToListAsync();
+        List<ServerWarns> warns = await _data.Warns.Where(w => w.serverid == Context.Guild.Id && w.warned == user.Id).ToListAsync();
         if (warns.Count == 0)
         {
             await RespondAsync($"No warns found for {user.Mention}");
@@ -152,10 +153,9 @@ public class UtilityCommands : InteractionModuleBase
             await RespondAsync("Don't think there's any image there 😬", ephemeral: true);
             return;
         }
-        var data = _core.GetDbContext();
         var embed = new EmbedBuilder();
         embed.WithTitle("OCR");
-        var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
+        var results = await _data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
         string txt = "";
         foreach (var r in results)
         {
@@ -177,9 +177,8 @@ public class UtilityCommands : InteractionModuleBase
     [MessageCommand("FactCheck")]
     public async Task FactCheck(IMessage msg)
     {
-        var data = _core.GetDbContext();
-        var srvtsk = data.GetServerConfig(Context.Guild.Id);
-        var usrtsk = data.GetServerUser((SocketGuildUser) Context.User);
+        var srvtsk = _data.GetServerConfig(Context.Guild.Id);
+        var usrtsk = _data.GetServerUser((SocketGuildUser) Context.User);
         var md5 = MD5.Create();
         var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(msg.Content.ToLower()));
         int seed = BitConverter.ToInt32(hash);
@@ -192,7 +191,7 @@ public class UtilityCommands : InteractionModuleBase
             return;
         }
 
-        var txn = await data.Transact(usr, null, srv.FactcheckCost, Transaction.TxnType.Purchase);
+        var txn = await _data.Transact(usr, null, srv.FactcheckCost, Transaction.TxnType.Purchase);
 
         if (msg is IUserMessage msg2 && txn == Transaction.TxnStatus.Success)
         {
@@ -305,9 +304,8 @@ public class UtilityCommands : InteractionModuleBase
     [SlashCommand(name: "addquote", description: "Add a quote to the repository")]
     public async Task AddQuote(string quote)
     {
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
-        var usr = await data.GetServerUser(Context.User.Id, srv.DiscordID);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
+        var usr = await _data.GetServerUser(Context.User.Id, srv.DiscordID);
 
         if (!usr.Authoritative)
         {
@@ -322,7 +320,7 @@ public class UtilityCommands : InteractionModuleBase
         }
         
         srv.Quotes.Add(new QuoteEntry() {ServerId = Context.Guild.Id, Text = quote});
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await RespondAsync($"Added \"{quote}\".\nI've got {srv.Quotes.Count:n0} quotes now (😬)");
     }
 }

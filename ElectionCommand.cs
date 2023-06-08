@@ -9,11 +9,13 @@ public class ElectionCommand : InteractionModuleBase
 {
     private Sentinel _sentinel;
     private Sentinel.Regexes _regexes;
+    private Data _data;
     
-    public ElectionCommand(Sentinel bot, Sentinel.Regexes rgx)
+    public ElectionCommand(Sentinel bot, Sentinel.Regexes rgx, Data data)
     {
         _sentinel = bot;
         _regexes = rgx;
+        _data = data;
     }
 
     [RequireUserPermission(GuildPermission.Administrator)]
@@ -33,8 +35,7 @@ public class ElectionCommand : InteractionModuleBase
         try
         {
             var d = (IComponentInteraction) Context.Interaction;
-            var data = _sentinel.GetDbContext();
-            var existing = await data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == d.Message.Id && x.VoterId == Context.User.Id);
+            var existing = await _data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == d.Message.Id && x.VoterId == Context.User.Id);
             if (existing != null)
             {
                 await RespondAsync("You have already voted.",ephemeral: true);
@@ -90,22 +91,21 @@ public class ElectionCommand : InteractionModuleBase
 
             var ballotstring = String.Join(",", ballot);
 
-            var data = _sentinel.GetDbContext();
             ElectionBallot b = new ElectionBallot();
             b.ElectionId = id;
             b.VoterId = Context.User.Id;
             b.Ballot = ballotstring;
 
-            var existing = await data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == b.ElectionId && x.VoterId == b.VoterId);
+            var existing = await _data.Ballots.FirstOrDefaultAsync(x => x.ElectionId == b.ElectionId && x.VoterId == b.VoterId);
             if (existing != null)
             {
                 await FollowupAsync($"You have already voted.", ephemeral: true);
                 return;
             }
 
-            var db = data.Ballots.AddAsync(b);
+            var db = _data.Ballots.AddAsync(b);
             
-            var srv = await data.GetServerConfig(Context.Guild.Id);
+            var srv = await _data.GetServerConfig(Context.Guild.Id);
             if (srv.FlagChannel.HasValue)
             {
                 var usr = Context.User;
@@ -120,7 +120,7 @@ public class ElectionCommand : InteractionModuleBase
                 await channel.SendMessageAsync(embed: eb.Build());
             }
             await db;
-            await data.SaveChangesAsync();
+            await _data.SaveChangesAsync();
             await FollowupAsync("Vote Recorded",ephemeral: true);
 
         }

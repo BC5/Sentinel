@@ -9,18 +9,18 @@ public class EconomyCommands : InteractionModuleBase
 {
     
     private Sentinel _core;
-    
-    public EconomyCommands(Sentinel core)
+    private Data _data;
+    public EconomyCommands(Sentinel core, Data data)
     {
         _core = core;
+        _data = data;
     }
     
     [Discord.Interactions.RequireOwner]
     [SlashCommand(name: "greatreset", description: "Turn the economy off and on again")]
     public async Task EconomyReset(bool hardreset = false)
     {
-        var data = _core.GetDbContext();
-        ServerUser u = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser u = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
         if (!u.Authoritative)
         {
             await Context.Interaction.RespondAsync("https://tenor.com/view/despicbable-me-minions-uh-no-no-eh-no-gif-3418009");
@@ -30,23 +30,23 @@ public class EconomyCommands : InteractionModuleBase
         await DeferAsync(ephemeral: true);
         try
         {
-            List<Transaction> txns = await data.Transactions.Where(x => x.ServerID == Context.Guild.Id).ToListAsync();
-            data.Transactions.RemoveRange(txns);
-            await data.SaveChangesAsync();
-            List<ServerUser> users = await data.Users.Where(x => x.ServerSnowflake == Context.Guild.Id).ToListAsync();
+            List<Transaction> txns = await _data.Transactions.Where(x => x.ServerID == Context.Guild.Id).ToListAsync();
+            _data.Transactions.RemoveRange(txns);
+            await _data.SaveChangesAsync();
+            List<ServerUser> users = await _data.Users.Where(x => x.ServerSnowflake == Context.Guild.Id).ToListAsync();
             if (hardreset)
             {
                 foreach (var user in users)
                 {
                     user.Balance = 0;
                 }
-                await data.SaveChangesAsync();
+                await _data.SaveChangesAsync();
             }
             else
             {
-                ServerUser virtualUser = await data.GetServerUser(Context.Guild.Id, Context.Guild.Id);
+                ServerUser virtualUser = await _data.GetServerUser(Context.Guild.Id, Context.Guild.Id);
                 virtualUser.Balance = 0;
-                await data.SaveChangesAsync();
+                await _data.SaveChangesAsync();
             
                 foreach (var user in users)
                 {
@@ -54,7 +54,7 @@ public class EconomyCommands : InteractionModuleBase
                     {
                         int i = user.Balance;
                         user.Balance = 0;
-                        await data.Transact(null, user, i, Transaction.TxnType.StartingBalance, true,true);
+                        await _data.Transact(null, user, i, Transaction.TxnType.StartingBalance, true,true);
                     }
                 }
             }
@@ -71,8 +71,7 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "leaderboard", description: "See whose got the most money")]
     public async Task Leaderboard(int count = 10)
     {
-        var data = _core.GetDbContext();
-        var top10 = data.GetTop(Context.Guild.Id,count);
+        var top10 = _data.GetTop(Context.Guild.Id,count);
 
         EmbedBuilder eb = new();
         eb.WithTitle("Top Users by Balance");
@@ -99,18 +98,16 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "moneysupply", description: "Check cash in circulation")]
     public async Task MoneySupply()
     {
-        var data = _core.GetDbContext();
-        ServerUser virtualUser = await data.GetServerUser(Context.Guild.Id, Context.Guild.Id);
+        ServerUser virtualUser = await _data.GetServerUser(Context.Guild.Id, Context.Guild.Id);
         await RespondAsync($"Money Supply: £{(0 - virtualUser.Balance):n0}",ephemeral:true);
     }
 
     [SlashCommand(name: "report", description: "Generate an economic report")]
     public async Task GenReport()
     {
-        var data = _core.GetDbContext();
         await DeferAsync(ephemeral:true);
         DateTime start = DateTime.Now;
-        List<Transaction> transactions = await data.Transactions.Where(x => x.ServerID == Context.Guild.Id).ToListAsync();
+        List<Transaction> transactions = await _data.Transactions.Where(x => x.ServerID == Context.Guild.Id).ToListAsync();
 
         int printed = 0;
         int created = 0;
@@ -212,27 +209,26 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "steal", description: "Attempt a heist. £50 fee. You may lose everything.")]
     public async Task Theft(int amount)
     {
-        var data = _core.GetDbContext();
         var users = await Context.Guild.GetUsersAsync();
         int userindex = RandomNumberGenerator.GetInt32(users.Count+1);
-        ServerUser thief = await data.GetServerUser(Context.User.Id,Context.Guild.Id);
+        ServerUser thief = await _data.GetServerUser(Context.User.Id,Context.Guild.Id);
         if (userindex == users.Count)
         {
             await RespondAsync($"You just tried to steal from me. I'm taking everything.\n**{Context.User.Mention} lost £{thief.Balance:n0}**");
             Console.WriteLine("TakeAll Triggered: Type A");
-            await data.Transact(thief, null, thief.Balance, Transaction.TxnType.Theft);
+            await _data.Transact(thief, null, thief.Balance, Transaction.TxnType.Theft);
             return;
         }
         var user = users.ElementAt(userindex);
 
         
-        ServerUser victim = await data.GetServerUser(user);
+        ServerUser victim = await _data.GetServerUser(user);
         
         if (victim.UserSnowflake == Context.Client.CurrentUser.Id)
         {
             await RespondAsync($"You just tried to steal from me. I'm taking everything.\n**{Context.User.Mention} lost £{thief.Balance:n0}**");
             Console.WriteLine("TakeAll Triggered: Type B");
-            await data.Transact(thief, null, thief.Balance, Transaction.TxnType.Theft);
+            await _data.Transact(thief, null, thief.Balance, Transaction.TxnType.Theft);
             return;
         }
 
@@ -248,7 +244,7 @@ public class EconomyCommands : InteractionModuleBase
             return;
         }
         
-        await data.Transact(thief, null, 50, Transaction.TxnType.Theft);
+        await _data.Transact(thief, null, 50, Transaction.TxnType.Theft);
         
         if (thief.UserSnowflake == victim.UserSnowflake)
         {
@@ -267,13 +263,13 @@ public class EconomyCommands : InteractionModuleBase
             {
                 await RespondAsync($"{Context.User.Mention} tried to steal £{amount:n0} from {user.Username}. They didn't have enough and it backfired." +
                                    $"\n**{Context.User.Username} lost £{amount+50:n0}**\n**{user.Username} is a bot so £{amount:n0} goes to <@241325827810131978> instead** (my code my rules)");
-                await data.Transact(thief.UserSnowflake, 241325827810131978, Context.Guild.Id, amount, Transaction.TxnType.Theft);
+                await _data.Transact(thief.UserSnowflake, 241325827810131978, Context.Guild.Id, amount, Transaction.TxnType.Theft);
             }
             else
             {
                 await RespondAsync($"{Context.User.Mention} tried to steal £{amount:n0} from {user.Username}. They didn't have enough and it backfired." +
                                    $"\n**{Context.User.Username} lost £{amount+50:n0}**\n**{user.Username} gained £{amount:n0}**");
-                await data.Transact(thief, victim, amount, Transaction.TxnType.Theft);
+                await _data.Transact(thief, victim, amount, Transaction.TxnType.Theft);
             }
             return;
         }
@@ -281,7 +277,7 @@ public class EconomyCommands : InteractionModuleBase
         {
             await RespondAsync($"{Context.User.Mention} stole £{amount:n0} from {user.Username}." +
                                $"\n**{Context.User.Username} gained £{amount-50:n0}**\n**{user.Username} lost £{amount:n0}**");
-            await data.Transact(victim, thief, amount, Transaction.TxnType.Theft);
+            await _data.Transact(victim, thief, amount, Transaction.TxnType.Theft);
             return;
         }
 
@@ -290,9 +286,8 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "stimulus", description: "Give cash to everyone in a role")]
     public async Task HelicopterMoney(IRole role, int amount)
     {
-        var data = _core.GetDbContext();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (!user.Authoritative)
         {
@@ -315,24 +310,24 @@ public class EconomyCommands : InteractionModuleBase
             {
                 if (amount >= 0)
                 {
-                    tasks.Add(data.Transact(null, u.Id,Context.Guild.Id, amount, Transaction.TxnType.Print,allowDebt:true));
+                    tasks.Add(_data.Transact(null, u.Id,Context.Guild.Id, amount, Transaction.TxnType.Print,allowDebt:true));
                 }
                 else
                 {
                     int seize = 0-amount;
-                    var profile = await data.GetServerUser(u);
+                    var profile = await _data.GetServerUser(u);
                     if (seize > profile.Balance)
                     {
                         seize = profile.Balance;
                     }
                     siezureamount = siezureamount + seize;
-                    tasks.Add(data.Transact(u.Id, null,Context.Guild.Id, seize, Transaction.TxnType.Tax,allowDebt:false,allowSeizure:true));
+                    tasks.Add(_data.Transact(u.Id, null,Context.Guild.Id, seize, Transaction.TxnType.Tax,allowDebt:false,allowSeizure:true));
                 }
             }
         }
 
         await Task.WhenAll(tasks);
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
         int successes = 0;
         int failures = 0;
@@ -360,13 +355,12 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "balance", description: "Check your balance")]
     public async Task Balance(IUser? target = null)
     {
-        var data = _core.GetDbContext();
         if (target == null) target = Context.User;
 
         try
         {
             await Context.Interaction.DeferAsync(ephemeral: true);
-            ServerUser prof = await data.GetServerUser(target.Id,Context.Guild.Id);
+            ServerUser prof = await _data.GetServerUser(target.Id,Context.Guild.Id);
             await Context.Interaction.FollowupAsync($"{target.Mention}'s Balance: £{prof.Balance:n0}");
         }
         catch (Exception e)
@@ -379,8 +373,7 @@ public class EconomyCommands : InteractionModuleBase
     [SlashCommand(name: "print", description: "Quantitative Easing")]
     public async Task Print(int amount)
     {
-        var data = _core.GetDbContext();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
 
         if (!user.Authoritative)
         {
@@ -388,23 +381,22 @@ public class EconomyCommands : InteractionModuleBase
             return;
         }
         
-        var status = await data.Transact(null, user, amount, Transaction.TxnType.Print,allowDebt:true);
+        var status = await _data.Transact(null, user, amount, Transaction.TxnType.Print,allowDebt:true);
         Console.WriteLine(status);
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await Context.Interaction.RespondAsync("🖨️💷💷💷");
     }
     
     [SlashCommand(name: "transfer", description: "Give money to another user")]
     public async Task Transfer(IUser recipient, int amount)
     {
-        var data = _core.GetDbContext();
         if (amount == 0)
         {
             await Context.Interaction.RespondAsync("Well that's a bit pointless", ephemeral: true);
         }
         
-        ServerUser recipi = await data.GetServerUser(recipient.Id, Context.Guild.Id);
-        ServerUser sender = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser recipi = await _data.GetServerUser(recipient.Id, Context.Guild.Id);
+        ServerUser sender = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
         if (amount < 0 && !sender.Authoritative)
         {
             await Context.Interaction.RespondAsync("https://tenor.com/view/despicbable-me-minions-uh-no-no-eh-no-gif-3418009");
@@ -423,7 +415,7 @@ public class EconomyCommands : InteractionModuleBase
             return;
         }
         
-        var status = await data.Transact(sender, recipi, amount, allowDebt:sender.Authoritative, allowSeizure:sender.Authoritative);
+        var status = await _data.Transact(sender, recipi, amount, allowDebt:sender.Authoritative, allowSeizure:sender.Authoritative);
 
         if (amount < 0)
         {
@@ -433,7 +425,7 @@ public class EconomyCommands : InteractionModuleBase
         {
             await Context.Interaction.RespondAsync($"£{amount:n0} transferred to {recipient.Mention}");
         }
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
     }
     

@@ -24,8 +24,7 @@ public class Data : DbContext
     public DbSet<OCREntry> OcrEntries { get; set; }
     public DbSet<ElectionBallot> Ballots { get; set; }
 
-    [NotMapped]
-    public string DbPath { get; }
+    [NotMapped] public string DbPath { get; } = "";
     
     public Data()
     {
@@ -130,7 +129,10 @@ public class Data : DbContext
     
     protected override void OnConfiguring(DbContextOptionsBuilder opt)
     {
-        opt.UseSqlite($"Data Source={DbPath}");
+        if (DbPath != null && DbPath != "")
+        {
+            opt.UseSqlite($"Data Source={DbPath}");
+        }
     }
 
     public async Task<ServerUser> GetServerUser(ulong user, ulong server)

@@ -9,19 +9,20 @@ namespace Sentinel;
 public class SlapCommands : InteractionModuleBase
 {
     private Sentinel _core;
+    private Data _data;
     
-    public SlapCommands(Sentinel core)
+    public SlapCommands(Sentinel core, Data data)
     {
-        this._core = core;
+        _core = core;
+        _data = data;
     }
 
     [SlashCommand("buydeflector",description:"Buy a deflector for mutes and nicklocks")]
     public async Task Deflect()
     {
         await DeferAsync(ephemeral: true);
-        var data = _core.GetDbContext();   
-        ServerUser usr = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser usr = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         bool expired = true;
         if (usr.DeflectorExpiry != null)
@@ -42,14 +43,14 @@ public class SlapCommands : InteractionModuleBase
             return;
         }
 
-        var status = await data.Transact(usr, null, srv.DeflectorCost, Transaction.TxnType.Purchase);
+        var status = await _data.Transact(usr, null, srv.DeflectorCost, Transaction.TxnType.Purchase);
         if (status != Transaction.TxnStatus.Success)
         {
             await FollowupAsync($"TXN ERROR: {status}");
             return;
         }
         usr.DeflectorExpiry = DateTime.Now + TimeSpan.FromHours(6);
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await FollowupAsync(
             $"You have purchased a deflector for £{srv.DeflectorCost:n0}.\nIt will expire <t:{((DateTimeOffset) usr.DeflectorExpiry.Value).ToUnixTimeSeconds()}:R>");
         return;
@@ -59,9 +60,8 @@ public class SlapCommands : InteractionModuleBase
     [SlashCommand("warn",description:"Tell someone off and add a note to their permanent record")]
     public async Task Warn(IGuildUser user, string warnreason)
     {
-        var data = _core.GetDbContext();
-        ServerUser warner = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser warner = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (warner.Balance < srv.CostWarn)
         {
@@ -69,7 +69,7 @@ public class SlapCommands : InteractionModuleBase
             return;
         }
 
-        var status = await data.Transact(warner, null, srv.CostWarn, Transaction.TxnType.Purchase);
+        var status = await _data.Transact(warner, null, srv.CostWarn, Transaction.TxnType.Purchase);
 
         if (status != Transaction.TxnStatus.Success)
         {
@@ -85,14 +85,14 @@ public class SlapCommands : InteractionModuleBase
             warnReason = warnreason,
             warnTime = DateTime.Now
         };
-        data.Warns.Add(warn);
+        _data.Warns.Add(warn);
 
         var embed = new EmbedBuilder();
         embed.WithColor(Color.Green);
         embed.WithDescription($"✅ {user.Mention} has been warned. || {warnreason}");
         
         await RespondAsync(user.Mention,embed: embed.Build());
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
     }
 
     [SlashCommand("reducemute",description:"Take 5 minutes off someone's mute duration")]
@@ -104,9 +104,8 @@ public class SlapCommands : InteractionModuleBase
             await RespondAsync("They're not muted", ephemeral: true);
             return;
         }
-        var data = _core.GetDbContext();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (multiplier < 1)
         {
@@ -124,8 +123,8 @@ public class SlapCommands : InteractionModuleBase
         
         var newtime = targetuser.TimedOutUntil - TimeSpan.FromMinutes(5*multiplier);
 
-        var status = await data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
-        await data.SaveChangesAsync();
+        var status = await _data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
+        await _data.SaveChangesAsync();
 
         if (status != Transaction.TxnStatus.Success)
         {
@@ -160,10 +159,9 @@ public class SlapCommands : InteractionModuleBase
             return;
         }
         
-        var data = _core.GetDbContext();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerUser target = await data.GetServerUser(targetuser.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser target = await _data.GetServerUser(targetuser.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (target.Immune)
         {
@@ -206,8 +204,8 @@ public class SlapCommands : InteractionModuleBase
             Console.WriteLine("oopie");
         }
 
-        var status = await data.Transact(user, null, srv.NickCost, Transaction.TxnType.Purchase);
-        await data.SaveChangesAsync();
+        var status = await _data.Transact(user, null, srv.NickCost, Transaction.TxnType.Purchase);
+        await _data.SaveChangesAsync();
         if (deflected)
         {
             await Context.Interaction.RespondAsync($"{nicklocktarget.Mention} <:thake:1019347821100539916>\n" 
@@ -223,10 +221,9 @@ public class SlapCommands : InteractionModuleBase
     public async Task Francophone(IGuildUser target)
     {
         await DeferAsync();
-        var data = _core.GetDbContext();
-        ServerUser u = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerUser t = await data.GetServerUser(target.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser u = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser t = await _data.GetServerUser(target.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (t.Immune)
         {
@@ -242,7 +239,7 @@ public class SlapCommands : InteractionModuleBase
             return;
         }
 
-        await data.Transact(u, null, srv.FrenchCost, Transaction.TxnType.Purchase);
+        await _data.Transact(u, null, srv.FrenchCost, Transaction.TxnType.Purchase);
                     
         if (t.ValidDeflector())
         {
@@ -265,7 +262,7 @@ public class SlapCommands : InteractionModuleBase
             else await FollowupAsync($"<@{t.UserSnowflake}> no more frogspeak 🥳");
         }
 
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
     }
 
@@ -280,10 +277,9 @@ public class SlapCommands : InteractionModuleBase
     {
         try
         {
-            var data = _core.GetDbContext();
-            ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-            ServerUser targetsu = await data.GetServerUser(target);
-            ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+            ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+            ServerUser targetsu = await _data.GetServerUser(target);
+            ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
             
             if (targetsu.Immune)
             {
@@ -342,14 +338,14 @@ public class SlapCommands : InteractionModuleBase
 
             if (deflected)
             {
-                var status = await data.Transact(targetsu, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
+                var status = await _data.Transact(targetsu, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
             }
             else
             {
-                var status = await data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
+                var status = await _data.Transact(user, null, srv.MuteCost*multiplier, Transaction.TxnType.Purchase);
             }
             
-            await data.SaveChangesAsync();
+            await _data.SaveChangesAsync();
         }
         catch (HttpException e)
         {

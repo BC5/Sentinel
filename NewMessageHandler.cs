@@ -32,56 +32,58 @@ public class NewMessageHandler
     
     public async Task NewMessage(SocketMessage msg)
     {
-        //Start voicenote download
-        Task voiceNote = StashVoiceNote(msg);
-        var data = _core.GetDbContext();
-        
-        if(!(msg.Channel is SocketGuildChannel)) return;
-        SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
-        ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
-
-        SocketGuildUser? sgu = null;
-        if (msg.Author is SocketGuildUser sgutemp) sgu = sgutemp;
-        
-        //OCR
-        OCR(msg);
-
-        //New Idiot & Add x Days check
-        bool suppressquote = await NewIdiot(sgu,msg,srv,channel,data);
-        
-        //Trigger random reply when pinged
-        if (!suppressquote && sgu != null) await RandomQuote(msg, sgu, user, srv, data);
-
-        //Do autoresponses
-        await AutoResponses(msg, srv);
-        
-        //Attitude
-        await Attitude(msg, user.SentinelAttitude);
-
-        //Check for "JUVE"
-        if (user.Juvecheck) await JuveCheck(msg);
-
-        //AntiChristmas
-        //await AntiChristmas(msg);
-        
-        //No bot messages past this point
-        if (msg.Author.IsBot)
+        using (var data = _core.GetDb())
         {
-            await data.SaveChangesAsync();
-            return;
-        }
-        
-        //Apply censor
-        await Censor(msg, user, srv);
-        
-        //Apply Frenchification
-        await Francais(msg, user,srv,_textcat);
-        
-        await data.SaveChangesAsync();
+            //Start voicenote download
+            Task voiceNote = StashVoiceNote(msg);
 
-        //Await voicenote
-        await voiceNote;
+            if (!(msg.Channel is SocketGuildChannel)) return;
+            SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
+            ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
+            ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
+
+            SocketGuildUser? sgu = null;
+            if (msg.Author is SocketGuildUser sgutemp) sgu = sgutemp;
+
+            //OCR
+            OCR(msg);
+
+            //New Idiot & Add x Days check
+            bool suppressquote = await NewIdiot(sgu, msg, srv, channel, data);
+
+            //Trigger random reply when pinged
+            if (!suppressquote && sgu != null) await RandomQuote(msg, sgu, user, srv, data);
+
+            //Do autoresponses
+            await AutoResponses(msg, srv);
+
+            //Attitude
+            await Attitude(msg, user.SentinelAttitude);
+
+            //Check for "JUVE"
+            if (user.Juvecheck) await JuveCheck(msg);
+
+            //AntiChristmas
+            //await AntiChristmas(msg);
+
+            //No bot messages past this point
+            if (msg.Author.IsBot)
+            {
+                await data.SaveChangesAsync();
+                return;
+            }
+
+            //Apply censor
+            await Censor(msg, user, srv);
+
+            //Apply Frenchification
+            await Francais(msg, user, srv, _textcat);
+
+            await data.SaveChangesAsync();
+
+            //Await voicenote
+            await voiceNote;
+        }
     }
 
     private async Task JuveCheck(SocketMessage msg)

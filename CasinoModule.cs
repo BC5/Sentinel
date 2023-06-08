@@ -12,12 +12,14 @@ public class CasinoModule : InteractionModuleBase
     private Config _config;
     private Sentinel _core;
     private Random _random;
+    private Data _data;
     
-    public CasinoModule(Sentinel core, Random rand)
+    public CasinoModule(Sentinel core, Random rand, Data data)
     {
         _core = core;
         _config = core.GetConfig();
         _random = rand;
+        _data = data;
     }
 
     [RequireUserPermission(GuildPermission.ManageGuild)]
@@ -25,8 +27,7 @@ public class CasinoModule : InteractionModuleBase
     public async Task Stats()
     {
         await DeferAsync(ephemeral: true);
-        var data = _core.GetDbContext();
-        var txns = data.Transactions.Where(txn => txn.Reason == Transaction.TxnType.CasinoSlots && txn.ServerID == Context.Guild.Id).ToAsyncEnumerable();
+        var txns = _data.Transactions.Where(txn => txn.Reason == Transaction.TxnType.CasinoSlots && txn.ServerID == Context.Guild.Id).ToAsyncEnumerable();
 
         int SlotsRevenue = 0;
         int SlotsPayouts = 0;
@@ -51,13 +52,12 @@ public class CasinoModule : InteractionModuleBase
     [SlashCommand("slotscfg","Casino stats")]
     public async Task SlotsConfig(int basePayout, int fee)
     {
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
 
         srv.SlotsFee = fee;
         srv.SlotsPayout = basePayout;
 
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await RespondAsync($"Slots base payout now £{srv.SlotsPayout:n0}, with play fee of £{srv.SlotsFee:n0}");
     }
 
@@ -65,10 +65,8 @@ public class CasinoModule : InteractionModuleBase
     public async Task Slots()
     {
         await DeferAsync();
-        
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
-        var usr = await data.GetServerUser((IGuildUser) Context.User);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
+        var usr = await _data.GetServerUser((IGuildUser) Context.User);
 
         if (usr.Balance < srv.SlotsFee)
         {
@@ -93,14 +91,14 @@ public class CasinoModule : InteractionModuleBase
             }
             
             msg = slotMachine.GetPayline() + $"\n**You've won £{payout:n0}!**";
-            await data.Transact(null,usr,payout-srv.SlotsFee,Transaction.TxnType.CasinoSlots,allowSeizure:true,allowDebt:true);
+            await _data.Transact(null,usr,payout-srv.SlotsFee,Transaction.TxnType.CasinoSlots,allowSeizure:true,allowDebt:true);
         }
         else
         {
             msg = slotMachine.GetPayline() + $"\n-£{srv.SlotsFee:n0}";
-            await data.Transact(usr,null,srv.SlotsFee,Transaction.TxnType.CasinoSlots);
+            await _data.Transact(usr,null,srv.SlotsFee,Transaction.TxnType.CasinoSlots);
         }
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
         if (!slotMachine.IsWin())
         {
@@ -128,9 +126,8 @@ public class CasinoModule : InteractionModuleBase
         }
         
         await DeferAsync();
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
-        var usr = await data.GetServerUser((IGuildUser) Context.User);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
+        var usr = await _data.GetServerUser((IGuildUser) Context.User);
 
         if (usr.Balance < srv.SlotsFee)
         {
@@ -155,14 +152,14 @@ public class CasinoModule : InteractionModuleBase
             }
             
             msg = slotMachine.GetPayline() + $"\n**You've won £{payout:n0}!**";
-            await data.Transact(null,usr,payout-srv.SlotsFee,Transaction.TxnType.CasinoSlots,allowSeizure:true,allowDebt:true);
+            await _data.Transact(null,usr,payout-srv.SlotsFee,Transaction.TxnType.CasinoSlots,allowSeizure:true,allowDebt:true);
         }
         else
         {
             msg = slotMachine.GetPayline() + $"\n-£{srv.SlotsFee:n0}";
-            await data.Transact(usr,null,srv.SlotsFee,Transaction.TxnType.CasinoSlots);
+            await _data.Transact(usr,null,srv.SlotsFee,Transaction.TxnType.CasinoSlots);
         }
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
         if (slotMachine.IsWin())
         {

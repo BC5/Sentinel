@@ -91,8 +91,8 @@ public class Sentinel
         //pause
         await Task.Delay(-1);
     }
-
-    public Data GetDbContext()
+    
+    public Data GetDb()
     {
         return new Data($@"{_config.DataDirectory}/data.sqlite");;
     }
@@ -242,6 +242,11 @@ public class Sentinel
         srv.AddSingleton(_deleter);
         srv.AddSingleton(_textcat);
         srv.AddSingleton(_random);
+        
+        //add dbcontext to dependency inj.
+        string DbPath = $@"{_config.DataDirectory}/data.sqlite";
+        srv.AddDbContext<Data>(o => o.UseSqlite($"Data Source={DbPath}"));
+        
         _services = srv.BuildServiceProvider();
         
         //add commands
@@ -309,18 +314,20 @@ public class Sentinel
 
         if (user is SocketGuildUser sgu)
         {
-            Data data = GetDbContext();
-            ServerUser su = await data.GetServerUser(sgu);
-
-            if (su.SentinelAttitude == ServerUser.Attitude.Belligerent)
+            using (var data = GetDb())
             {
-                if (_random.Next(75) == 69)
+                ServerUser su = await data.GetServerUser(sgu);
+
+                if (su.SentinelAttitude == ServerUser.Attitude.Belligerent)
                 {
-                    await sgu.SetTimeOutAsync(TimeSpan.FromSeconds(30));
-                    EmbedBuilder eb = new EmbedBuilder();
-                    eb.WithDescription($"✅ {sgu.Mention} **was muted** | I felt like it");
-                    eb.WithColor(Color.Green);
-                    await channel.SendMessageAsync(embed: eb.Build());
+                    if (_random.Next(75) == 69)
+                    {
+                        await sgu.SetTimeOutAsync(TimeSpan.FromSeconds(30));
+                        EmbedBuilder eb = new EmbedBuilder();
+                        eb.WithDescription($"✅ {sgu.Mention} **was muted** | I felt like it");
+                        eb.WithColor(Color.Green);
+                        await channel.SendMessageAsync(embed: eb.Build());
+                    }
                 }
             }
         }
@@ -328,19 +335,21 @@ public class Sentinel
 
     private async Task NewMember(SocketGuildUser arg)
     {
-        var data = GetDbContext();
-        var profile = await data.GetServerUser(arg);
-        if (profile.Balance != 0)
+        using (var data = GetDb())
         {
-            int rejoinfee = 100;
-            if (profile.Balance < 100) rejoinfee = profile.Balance;
-            await data.Transact(profile, null, rejoinfee, Transaction.TxnType.Tax);
-
-            if (arg.Guild.Id == 1019326226713817138)
+            var profile = await data.GetServerUser(arg);
+            if (profile.Balance != 0)
             {
-                var c = (ITextChannel) arg.Guild.GetChannel(1019326857193205770);
-                await c.SendMessageAsync($"{arg.Mention} look who's back!");
-                await c.SendMessageAsync("https://tenor.com/view/mr-burns-dont-forget-youre-here-forever-gif-18420566");
+                int rejoinfee = 100;
+                if (profile.Balance < 100) rejoinfee = profile.Balance;
+                await data.Transact(profile, null, rejoinfee, Transaction.TxnType.Tax);
+
+                if (arg.Guild.Id == 1019326226713817138)
+                {
+                    var c = (ITextChannel) arg.Guild.GetChannel(1019326857193205770);
+                    await c.SendMessageAsync($"{arg.Mention} look who's back!");
+                    await c.SendMessageAsync("https://tenor.com/view/mr-burns-dont-forget-youre-here-forever-gif-18420566");
+                }
             }
         }
     }
@@ -352,62 +361,65 @@ public class Sentinel
 
     private async Task MessageEdit(Cacheable<IMessage, ulong> arg1, SocketMessage msg, ISocketMessageChannel arg3)
     {
-        var data = GetDbContext();
         //await _newMessageHandler.AntiChristmas(msg);
-        
-        if(msg.Author.IsBot) return;
-        if(!(msg.Channel is SocketGuildChannel)) return;
-        SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
-        ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
-
-        if (user.Censored && srv.FunnyCommands)
+        using (var data = GetDb())
         {
-            if (CensorCheck(msg, srv))
+            if(msg.Author.IsBot) return;
+            if(!(msg.Channel is SocketGuildChannel)) return;
+            SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
+            ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
+            ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
+
+            if (user.Censored && srv.FunnyCommands)
             {
-                await msg.DeleteAsync();
+                if (CensorCheck(msg, srv))
+                {
+                    await msg.DeleteAsync();
+                }
             }
-        }
         
-        //Apply Frenchification
-        await NewMessageHandler.Francais(msg, user,srv,_textcat);
+            //Apply Frenchification
+            await NewMessageHandler.Francais(msg, user,srv,_textcat);
+        }
         
     }
 
     private async Task UpdateMember(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after)
     {
-        var data = GetDbContext();
-        if(!(before.HasValue)) return;
-        string nBefore = before.Value.Nickname;
-        string nAfter = after.Nickname;
+        using (var data = GetDb())
+        {
+            if(!(before.HasValue)) return;
+            string nBefore = before.Value.Nickname;
+            string nAfter = after.Nickname;
 
-        //await AntiSierraAktion(before, after);
-        //await ProtectRoles(before, after,1019250206212116571);
+            //await AntiSierraAktion(before, after);
+            //await ProtectRoles(before, after,1019250206212116571);
         
-        if(nBefore == nAfter) return;
+            if(nBefore == nAfter) return;
 
-        ServerUser user = await data.GetServerUser(after.Id, after.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(after.Guild.Id);
+            ServerUser user = await data.GetServerUser(after.Id, after.Guild.Id);
+            ServerConfig srv = await data.GetServerConfig(after.Guild.Id);
 
-        if (nAfter != null && nAfter.ToUpper().Contains("CHRISTMAS"))
-        {
-            await after.ModifyAsync(properties => properties.Nickname = "[REDACTED]");
-            Console.WriteLine("Anti-Christmas Aktion");
-        }
-
-        if (user.Nicklock != "" && srv.FunnyCommands)
-        {
-            if (user.NicklockUntil <= DateTime.Now)
+            if (nAfter != null && nAfter.ToUpper().Contains("CHRISTMAS"))
             {
-                user.Nicklock = "";
-                user.NicklockUntil = null;
-                await data.SaveChangesAsync();
-                Console.WriteLine("Ended lock");
-                return;
+                await after.ModifyAsync(properties => properties.Nickname = "[REDACTED]");
+                Console.WriteLine("Anti-Christmas Aktion");
             }
-            if(nAfter == user.Nicklock) return;
-            await after.ModifyAsync(properties => properties.Nickname = user.Nicklock);
-            Console.WriteLine("Reverted nickchange");
+
+            if (user.Nicklock != "" && srv.FunnyCommands)
+            {
+                if (user.NicklockUntil <= DateTime.Now)
+                {
+                    user.Nicklock = "";
+                    user.NicklockUntil = null;
+                    await data.SaveChangesAsync();
+                    Console.WriteLine("Ended lock");
+                    return;
+                }
+                if(nAfter == user.Nicklock) return;
+                await after.ModifyAsync(properties => properties.Nickname = user.Nicklock);
+                Console.WriteLine("Reverted nickchange");
+            }
         }
     }
 
@@ -479,66 +491,68 @@ public class Sentinel
     private async void Tick(object? sender, ElapsedEventArgs elapsedEventArgs)
     {
         _ticks++;
-        var data = GetDbContext();
         //Every 30s
-        if (_ticks % 30 == 0)
+        using (var data = GetDb())
         {
-            //PROCEDURE SCHEDULER
-            try
+            if (_ticks % 30 == 0)
             {
-                await _procScheduler.Tick();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-            
-            //NICKLOCKS
-            try
-            {
-                List<ServerUser> nicklocked = await data.Users.Where(usr => usr.Nicklock != "").ToListAsync();
-                foreach (var user in nicklocked)
+                //PROCEDURE SCHEDULER
+                try
                 {
-                    if (user.NicklockUntil < DateTime.Now)
+                    await _procScheduler.Tick();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            
+                //NICKLOCKS
+                try
+                {
+                    List<ServerUser> nicklocked = await data.Users.Where(usr => usr.Nicklock != "").ToListAsync();
+                    foreach (var user in nicklocked)
                     {
-                        Console.WriteLine("Cleared Nicklock");
-                        user.Nicklock = "";
+                        if (user.NicklockUntil < DateTime.Now)
+                        {
+                            Console.WriteLine("Cleared Nicklock");
+                            user.Nicklock = "";
 
-                        string? newnick = user.PrevNick;
-                        if (newnick != null && newnick == "") newnick = null;
+                            string? newnick = user.PrevNick;
+                            if (newnick != null && newnick == "") newnick = null;
 
-                        var t1 = data.SaveChangesAsync();
-                        var t2 = _discord.GetGuild(user.ServerSnowflake).GetUser(user.UserSnowflake)
-                            .ModifyAsync(x => x.Nickname = newnick);
-                        await t1;
-                        await t2;
+                            var t1 = data.SaveChangesAsync();
+                            var t2 = _discord.GetGuild(user.ServerSnowflake).GetUser(user.UserSnowflake)
+                                .ModifyAsync(x => x.Nickname = newnick);
+                            await t1;
+                            await t2;
+                        }
                     }
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Exception in Nicklock Tick: " + e);
+                }
             }
-            catch (Exception e)
+        
+            //Every minute
+            if (_ticks % 60 == 0)
             {
-                Console.WriteLine("Exception in Nicklock Tick: " + e);
+                _detention.Tick();
             }
-        }
-        
-        //Every minute
-        if (_ticks % 60 == 0)
-        {
-            _detention.Tick();
-        }
 
-        //Every 5 seconds
-        if (_ticks % 5 == 3)
-        {
-            var r = Rebuild();
-            await _deleter.Delete();
-            await AnonPollUpdate();
-            await r;
-        }
+            //Every 5 seconds
+            if (_ticks % 5 == 3)
+            {
+                var r = Rebuild();
+                await _deleter.Delete();
+                await AnonPollUpdate();
+                await r;
+            }
         
-        //Every second
-        await _ocr.TryNext();
-        await JuveChecks();
+            //Every second
+            await _ocr.TryNext();
+            await JuveChecks();
+        }
     }
 
     public List<RebuildCommand.RebuildTask> RebuildTasks = new();
@@ -567,23 +581,27 @@ public class Sentinel
 
     private async Task DelReact(Cacheable<IUserMessage, ulong> msgg, Cacheable<IMessageChannel, ulong> arg2, SocketReaction react)
     {
-        var data = GetDbContext();
-        IMessage msg;
-        if (!react.Message.IsSpecified) msg = await react.Channel.GetMessageAsync(react.MessageId);
-        else msg = react.Message.Value;
-        await data.RemoveReact(react,msg);
+        using (var data = GetDb())
+        {
+            IMessage msg;
+            if (!react.Message.IsSpecified) msg = await react.Channel.GetMessageAsync(react.MessageId);
+            else msg = react.Message.Value;
+            await data.RemoveReact(react,msg);
+        }
     }
     
     private async Task NewReact(Cacheable<IUserMessage, ulong> msgg, Cacheable<IMessageChannel, ulong> b, SocketReaction react)
     {
-        var data = GetDbContext();
-        IMessage msg;
-        if (!react.Message.IsSpecified) msg = await react.Channel.GetMessageAsync(react.MessageId);
-        else msg = react.Message.Value;
-        await data.AddReact(react,msg);
+        using (var data = GetDb())
+        {
+            IMessage msg;
+            if (!react.Message.IsSpecified) msg = await react.Channel.GetMessageAsync(react.MessageId);
+            else msg = react.Message.Value;
+            await data.AddReact(react,msg);
         
-        //twitter thread thing
-        Task.Run(async () => { await TwitterThread(react, msg); });
+            //twitter thread thing
+            Task.Run(async () => { await TwitterThread(react, msg); });
+        }
     }
 
     private async Task TwitterThread(SocketReaction react, IMessage msg)

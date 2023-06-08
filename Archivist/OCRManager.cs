@@ -110,8 +110,10 @@ public class OCRManager
 
     public Task<List<OCREntry>> QueryIndex(string q, ulong channel)
     {
-        var data = _core.GetDbContext();
-        return data.OcrEntries.FromSqlInterpolated($"SELECT Id,Server,Channel,Message,ImageURL,ImageHash,OE.Text FROM OcrIndex JOIN OcrEntries OE on OcrIndex.Text = OE.Text WHERE OcrIndex.Text MATCH {q} AND OE.Channel = {channel};").ToListAsync();
+        using (var data = _core.GetDb())
+        {
+            return data.OcrEntries.FromSqlInterpolated($"SELECT Id,Server,Channel,Message,ImageURL,ImageHash,OE.Text FROM OcrIndex JOIN OcrEntries OE on OcrIndex.Text = OE.Text WHERE OcrIndex.Text MATCH {q} AND OE.Channel = {channel};").ToListAsync();
+        }
     }
 
     public void EnqueueMessage(IMessage msg)
@@ -142,53 +144,57 @@ public class OCRManager
     {
         if (msg.Channel is IGuildChannel channel)
         {
-            var data = _core.GetDbContext();
-            var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
-            if (results.Count > 0)
+            using (var data = _core.GetDb())
             {
-                Console.WriteLine("Already indexed message. Skipping.");
-                await PostProcess(msg);
-                return;
-            }
-            
-            foreach (var attachment in msg.Attachments)
-            {
-                if (attachment.ContentType is "image/png" or "image/jpeg" or "image/webp")
+                var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
+                if (results.Count > 0)
                 {
-                    await DoOCR(msg, channel, attachment.Url);
+                    Console.WriteLine("Already indexed message. Skipping.");
+                    await PostProcess(msg);
+                    return;
                 }
-            }
+            
+                foreach (var attachment in msg.Attachments)
+                {
+                    if (attachment.ContentType is "image/png" or "image/jpeg" or "image/webp")
+                    {
+                        await DoOCR(msg, channel, attachment.Url);
+                    }
+                }
 
-            foreach (var embed in msg.Embeds)
-            {
-                if (embed.Type == EmbedType.Image)
+                foreach (var embed in msg.Embeds)
                 {
-                    await DoOCR(msg, channel, embed.Url);
+                    if (embed.Type == EmbedType.Image)
+                    {
+                        await DoOCR(msg, channel, embed.Url);
+                    }
+                    else if(embed.Image.HasValue)
+                    {
+                        await DoOCR(msg, channel, embed.Image.Value.Url);
+                    }
                 }
-                else if(embed.Image.HasValue)
-                {
-                    await DoOCR(msg, channel, embed.Image.Value.Url);
-                }
-            }
             
-            await PostProcess(msg);
+                await PostProcess(msg);
+            }
         }
     }
 
     public async Task PostProcess(IMessage msg)
     {
-        var data = _core.GetDbContext();
-        var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
-        var su = await data.GetServerUser(msg.Author.Id, ((IGuildChannel) msg.Channel).GuildId);
-
-        if (su.Juvecheck)
+        using (var data = _core.GetDb())
         {
-            foreach (var r in results)
+            var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
+            var su = await data.GetServerUser(msg.Author.Id, ((IGuildChannel) msg.Channel).GuildId);
+
+            if (su.Juvecheck)
             {
-                if (!r.Text.ToUpper().Contains("JUVE"))
+                foreach (var r in results)
                 {
-                    _core.PendingJuvechecks.Add(msg);
-                    break;
+                    if (!r.Text.ToUpper().Contains("JUVE"))
+                    {
+                        _core.PendingJuvechecks.Add(msg);
+                        break;
+                    }
                 }
             }
         }
@@ -276,9 +282,11 @@ public class OCRManager
                 Text = text
             };
 
-            var data = _core.GetDbContext();
-            await data.OcrEntries.AddAsync(newentry);
-            await data.SaveChangesAsync();
+            using (var data = _core.GetDb())
+            {
+                await data.OcrEntries.AddAsync(newentry);
+                await data.SaveChangesAsync();
+            }
         }
         catch (Exception e)
         {
@@ -289,56 +297,60 @@ public class OCRManager
 
     public async Task<bool> MatchURL(string url, IMessage msg, ulong serverid)
     {
-        var data = _core.GetDbContext();
-        List<OCREntry> entries = await data.OcrEntries.Where(x => x.ImageURL == url).ToListAsync();
-
-        if (entries.Count == 0) return false;
-        OCREntry entry = entries[0];
-        
-        if (entry != null)
+        using (var data = _core.GetDb())
         {
-            OCREntry newentry = new OCREntry()
-            {
-                Message = msg.Id,
-                Channel = msg.Channel.Id,
-                ImageHash = entry.ImageHash,
-                ImageURL = url,
-                Text = entry.Text,
-                Server = serverid
-            };
-            await data.OcrEntries.AddAsync(newentry);
-            await data.SaveChangesAsync();
-            Console.WriteLine("Matched URL");
-            return true;
-        }
+            List<OCREntry> entries = await data.OcrEntries.Where(x => x.ImageURL == url).ToListAsync();
 
-        return false;
+            if (entries.Count == 0) return false;
+            OCREntry entry = entries[0];
+        
+            if (entry != null)
+            {
+                OCREntry newentry = new OCREntry()
+                {
+                    Message = msg.Id,
+                    Channel = msg.Channel.Id,
+                    ImageHash = entry.ImageHash,
+                    ImageURL = url,
+                    Text = entry.Text,
+                    Server = serverid
+                };
+                await data.OcrEntries.AddAsync(newentry);
+                await data.SaveChangesAsync();
+                Console.WriteLine("Matched URL");
+                return true;
+            }
+
+            return false;
+        }
     }
     
     public async Task<bool> MatchHash(byte[] data, string url, IMessage msg, ulong serverid)
     {
         byte[] hash = _sha.ComputeHash(data);
-        var db = _core.GetDbContext();
-        OCREntry? entry = await db.OcrEntries.Where(x => x.ImageHash == hash).SingleOrDefaultAsync();
-
-        if (entry != null)
+        using (var db = _core.GetDb())
         {
-            OCREntry newentry = new OCREntry()
-            {
-                Message = msg.Id,
-                Channel = msg.Channel.Id,
-                ImageHash = hash,
-                ImageURL = url,
-                Text = entry.Text,
-                Server = serverid
-            };
-            await db.OcrEntries.AddAsync(newentry);
-            await db.SaveChangesAsync();
-            Console.WriteLine("Matched Hash");
-            return true;
-        }
+            OCREntry? entry = await db.OcrEntries.Where(x => x.ImageHash == hash).SingleOrDefaultAsync();
 
-        return false;
+            if (entry != null)
+            {
+                OCREntry newentry = new OCREntry()
+                {
+                    Message = msg.Id,
+                    Channel = msg.Channel.Id,
+                    ImageHash = hash,
+                    ImageURL = url,
+                    Text = entry.Text,
+                    Server = serverid
+                };
+                await db.OcrEntries.AddAsync(newentry);
+                await db.SaveChangesAsync();
+                Console.WriteLine("Matched Hash");
+                return true;
+            }
+
+            return false;
+        }
     }
     
 }

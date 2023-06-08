@@ -17,30 +17,32 @@ public class Detention
 
     public async void Tick()
     {
-        try
+        using (var data = _core.GetDb())
         {
-            var data = _core.GetDbContext();
-            var expired = await data.Users.Where(x => x.IdiotedUntil != null && x.IdiotedUntil < DateTime.Now).ToListAsync();
-            foreach (var user in expired)
+            try
             {
-                if (!_discord.Guilds.Any(x => x.Id == user.ServerSnowflake))
+                var expired = await data.Users.Where(x => x.IdiotedUntil != null && x.IdiotedUntil < DateTime.Now).ToListAsync();
+                foreach (var user in expired)
                 {
-                    continue;
-                };
+                    if (!_discord.Guilds.Any(x => x.Id == user.ServerSnowflake))
+                    {
+                        continue;
+                    };
                 
-                if (user.IdiotedUntil < DateTime.Now)
-                {
-                    IGuildUser u = _discord.GetGuild(user.ServerSnowflake).GetUser(user.UserSnowflake);
-                    ServerConfig scfg = await data.GetServerConfig(user.ServerSnowflake);
-                    if(scfg.IdiotRole == null) continue;
-                    await Unidiot(u, user, scfg.IdiotRole.Value);
-                    await data.SaveChangesAsync();
+                    if (user.IdiotedUntil < DateTime.Now)
+                    {
+                        IGuildUser u = _discord.GetGuild(user.ServerSnowflake).GetUser(user.UserSnowflake);
+                        ServerConfig scfg = await data.GetServerConfig(user.ServerSnowflake);
+                        if(scfg.IdiotRole == null) continue;
+                        await Unidiot(u, user, scfg.IdiotRole.Value);
+                        await data.SaveChangesAsync();
+                    }
                 }
             }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 

@@ -7,10 +7,12 @@ namespace Sentinel;
 public class PollCommand : InteractionModuleBase
 {
     private Sentinel _core;
+    private Data _data;
     
-    public PollCommand(Sentinel core)
+    public PollCommand(Sentinel core, Data data)
     {
-        this._core = core;
+        _core = core;
+        _data = data;
     }
     
     [SlashCommand("anonpoll", "Create an anonymous poll")]
@@ -60,13 +62,12 @@ public class PollCommand : InteractionModuleBase
     [ComponentInteraction("sentinel-vote")]
     public async Task Vote(string[] selection)
     {
-        var data = _core.GetDbContext();
         try
         {
             int i = int.Parse(selection[0].Replace("sentinel-vote-", ""));
             var msg = (SocketUserMessage) ((IComponentInteraction) Context.Interaction).Message;
             
-            bool voted = await data.CheckVoted(msg.Id,Context.User.Id);
+            bool voted = await _data.CheckVoted(msg.Id,Context.User.Id);
 
             if (voted)
             {
@@ -77,7 +78,7 @@ public class PollCommand : InteractionModuleBase
             var vote = new Sentinel.PendingAnonpollVote(msg.Id, msg.Channel.Id, i);
             _core.PendingVotes.Add(vote);
             
-            await data.RecordVote(msg.Id, Context.User.Id);
+            await _data.RecordVote(msg.Id, Context.User.Id);
             await RespondAsync("Vote Recorded. It may take a few seconds to appear.", ephemeral:true);
         }
         catch (Exception e)

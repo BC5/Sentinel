@@ -8,10 +8,12 @@ namespace Sentinel;
 public class CensorCommands : InteractionModuleBase
 {
     private Sentinel _core;
+    private Data _data;
     
-    public CensorCommands(Sentinel core)
+    public CensorCommands(Sentinel core, Data data)
     {
-        this._core = core;
+        _core = core;
+        _data = data;
     }
 
     [SlashCommand("1984","Apply the censor to a user")]
@@ -28,10 +30,9 @@ public class CensorCommands : InteractionModuleBase
 
     public async Task Set1984(IGuildUser targett, bool on)
     {
-        var data = _core.GetDbContext();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerUser target = await data.GetServerUser(targett.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerUser target = await _data.GetServerUser(targett.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
         if (targett.IsBot) {await RespondAsync("https://tenor.com/view/despicbable-me-minions-uh-no-no-eh-no-gif-3418009", ephemeral: true); return;}
@@ -50,7 +51,7 @@ public class CensorCommands : InteractionModuleBase
         }
 
         target.Censored = on;
-        var status = await data.Transact(user, null, cost, Transaction.TxnType.Purchase);
+        var status = await _data.Transact(user, null, cost, Transaction.TxnType.Purchase);
 
         if (status != Transaction.TxnStatus.Success)
         {
@@ -61,14 +62,13 @@ public class CensorCommands : InteractionModuleBase
         if (on) await RespondAsync($"{targett.Mention} 1984");
         else await RespondAsync($"{targett.Mention} Free Speech Prevails");
 
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
     }
 
     [SlashCommand("check","See the current rules")]
     public async Task CheckCensor(bool ephemeral = true)
     {
-        var data = _core.GetDbContext();
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         string msg = "**State of the Censor**";
         foreach (CensorEntry entry in srv.Censor)
@@ -81,10 +81,9 @@ public class CensorCommands : InteractionModuleBase
     [SlashCommand("blacklist","Add a no-no word to the censor")]
     public async Task AddBlacklist(string phrase, bool wildcard = false)
     {
-        var data = _core.GetDbContext();
         phrase = phrase.ToUpper();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
         
@@ -102,7 +101,7 @@ public class CensorCommands : InteractionModuleBase
             return;
         }
 
-        var status = await data.Transact(user, null, cost, Transaction.TxnType.Purchase);
+        var status = await _data.Transact(user, null, cost, Transaction.TxnType.Purchase);
 
         CensorEntry censor = new CensorEntry
         {
@@ -112,17 +111,16 @@ public class CensorCommands : InteractionModuleBase
         };
 
         srv.Censor.Add(censor);
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await RespondAsync($"1984'd phrase {phrase}, That'll be £{cost:n0} please.");
     }
 
     [SlashCommand("remove","Remove a phrase from the censor")]
     public async Task Decensor(string phrase, bool whitelist = false)
     {
-        var data = _core.GetDbContext();
         phrase = phrase.ToUpper();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
         
@@ -150,18 +148,17 @@ public class CensorCommands : InteractionModuleBase
         }
         await RespondAsync($"{phrase} is no longer on the {(whitelist?"whitelist":"blacklist")} 🥳");
         
-        var status = await data.Transact(user, null, srv.CostDe1984, Transaction.TxnType.Purchase);
-        await data.SaveChangesAsync();
+        var status = await _data.Transact(user, null, srv.CostDe1984, Transaction.TxnType.Purchase);
+        await _data.SaveChangesAsync();
 
     }
     
     [SlashCommand("whitelist","Add a no-no word to the censor")]
     public async Task AddWhitelist(string phrase, bool wildcard = true)
     {
-        var data = _core.GetDbContext();
         phrase = phrase.ToUpper();
-        ServerUser user = await data.GetServerUser(Context.User.Id, Context.Guild.Id);
-        ServerConfig srv = await data.GetServerConfig(Context.Guild.Id);
+        ServerUser user = await _data.GetServerUser(Context.User.Id, Context.Guild.Id);
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
 
         if (!srv.FunnyCommands) {await RespondAsync("Disabled by Admin", ephemeral: true); return;}
         
@@ -179,7 +176,7 @@ public class CensorCommands : InteractionModuleBase
             return;
         }
 
-        var status = await data.Transact(user, null, cost, Transaction.TxnType.Purchase);
+        var status = await _data.Transact(user, null, cost, Transaction.TxnType.Purchase);
         
         CensorEntry censor = new CensorEntry
         {
@@ -189,7 +186,7 @@ public class CensorCommands : InteractionModuleBase
         };
         
         srv.Censor.Add(censor);
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
 
         await RespondAsync($"1984'd phrase {phrase}, That'll be £{cost} please.");
 

@@ -8,19 +8,20 @@ namespace Sentinel;
 public class ConfigCommands : InteractionModuleBase
 {
     private Sentinel _core;
-    public ConfigCommands(Sentinel core)
+    private Data _data;
+    public ConfigCommands(Sentinel core, Data data)
     {
         _core = core;
+        _data = data;
     }
 
     [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator, Group = "Permission")]
     [SlashCommand("flagchannel","Set the channel AutoMod flags are dumped in")]
     public async Task FlagChannel(IMessageChannel channel)
     {
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.FlagChannel = channel.Id;
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await RespondAsync("Done ✅",ephemeral: true);
     }
     
@@ -28,10 +29,9 @@ public class ConfigCommands : InteractionModuleBase
     [SlashCommand("modrole","Set the role for Moderators")]
     public async Task FlagChannel(IRole role)
     {
-        var data = _core.GetDbContext();
-        var srv = await data.GetServerConfig(Context.Guild.Id);
+        var srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.ModRole = role.Id;
-        await data.SaveChangesAsync();
+        await _data.SaveChangesAsync();
         await RespondAsync("Done ✅",ephemeral: true);
     }
     
