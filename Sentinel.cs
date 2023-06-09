@@ -132,6 +132,12 @@ public class Sentinel
         Console.WriteLine(msg.ToString());
         return Task.CompletedTask;
     }
+    
+    private Task InteractionLog(LogMessage msg)
+    {
+        Console.WriteLine(msg.ToString());
+        return Task.CompletedTask;
+    }
 
     public DiscordSocketClient GetClient()
     {
@@ -269,6 +275,7 @@ public class Sentinel
         
         //Hook interactions events
         _interactions.SlashCommandExecuted += SlashCommandExecuted;
+        _interactions.Log += InteractionLog;
         
         //reg commands
         foreach (ulong server in _config.Servers)
@@ -672,10 +679,19 @@ public class Sentinel
             var ctx = new SocketInteractionContext(_discord, i);
             var result = await _interactions.ExecuteCommandAsync(ctx, _services);
 
-            if (!result.IsSuccess && result is PreconditionResult)
+            if (!result.IsSuccess)
             {
-                await i.RespondAsync("https://tenor.com/view/despicbable-me-minions-uh-no-no-eh-no-gif-3418009",ephemeral:true);
+                if (i is ISlashCommandInteraction sc)
+                {
+                    Console.WriteLine($"/{sc.Data.Name} errored. {result.ErrorReason}");
+                }
+                
+                if (result is PreconditionResult)
+                {
+                    await i.RespondAsync("https://tenor.com/view/despicbable-me-minions-uh-no-no-eh-no-gif-3418009",ephemeral:true);
+                }
             }
+            
             
         }
         catch (Exception e)

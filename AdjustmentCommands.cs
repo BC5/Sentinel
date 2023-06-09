@@ -202,8 +202,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerUser usr = await _data.GetServerUser(user);
         usr.Authoritative = !usr.Authoritative;
-        await _data.SaveChangesAsync();
         await RespondAsync($"{user.Mention} is now {(usr.Authoritative ? "authoritative" : "not authoritative")}");
+        await _data.SaveChangesAsync();
     }
     
     [SlashCommand(name: "immunity", description: "Toggle user's status as immune to slap commands")]
