@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Sentinel.Archivist;
 using Sentinel.ImageProcessing;
 using Sentinel.ImageProcessing.Operations;
+using Sentinel.Logging;
 using Sentinel.Procedures;
 using IResult = Discord.Interactions.IResult;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -24,7 +25,8 @@ namespace Sentinel;
 
 public class Sentinel
 {
-
+    private SentinelLogging _log;
+    
     private DiscordSocketClient _discord;
     private InteractionService _interactions;
     private ServiceProvider _services;
@@ -106,6 +108,9 @@ public class Sentinel
 
     public Sentinel(Config conf, string cfgloc)
     {
+        _log = new SentinelLogging();
+        _log.LogOutputs.Add(new ConsoleOutput());
+        
         _configfile = cfgloc;
         _config = conf;
         _procScheduler = new ProcedureScheduler(this,_config);
@@ -127,16 +132,16 @@ public class Sentinel
         _regexes = new Regexes();
     }
 
-    private Task Log(LogMessage msg)
+    private async Task Log(LogMessage msg)
     {
-        Console.WriteLine(msg.ToString());
-        return Task.CompletedTask;
+        LogEntry entry = new LogEntry(msg.Source, msg.Message, SentinelLogging.FromSeverity(msg.Severity));
+        await _log.Log(entry);
     }
     
-    private Task InteractionLog(LogMessage msg)
+    private async Task InteractionLog(LogMessage msg)
     {
-        Console.WriteLine(msg.ToString());
-        return Task.CompletedTask;
+        LogEntry entry = new LogEntry(msg.Source, msg.Message, SentinelLogging.FromSeverity(msg.Severity));
+        await _log.Log(entry);
     }
 
     public DiscordSocketClient GetClient()
@@ -148,7 +153,7 @@ public class Sentinel
     {
         //SentinelEvents, Modules
         Events = new(this);
-        LoadModules();
+        await LoadModules();
         
         var dcfg = new DiscordSocketConfig()
         {
@@ -184,23 +189,22 @@ public class Sentinel
         StartTicking();
     }
 
-    private void LoadModules()
+    private async Task LoadModules()
     {
         DirectoryInfo dir = new DirectoryInfo($@"{_config.DataDirectory}/plugins");
         foreach (var dll in dir.GetFiles("*.dll"))
         {
-            Console.WriteLine(dll.FullName);
             Assembly assembly = Assembly.LoadFile(dll.FullName);
             Type[] plugintype = assembly.GetTypes().Where(type => typeof(ISentinelPlugin).IsAssignableFrom(type) && !type.IsInterface).ToArray();
             if (plugintype.Length != 1)
             {
-                Console.WriteLine($"Found {plugintype.Length} ISentinelPlugin implementation in {dll.Name} when there should be 1");
+                await _log.Error($"Core",$"Found {plugintype.Length} ISentinelPlugin implementation in {dll.Name} when there should be 1");
                 continue;
             }
             ISentinelPlugin? plugin = (ISentinelPlugin?) Activator.CreateInstance(plugintype[0]);
             if (plugin == null)
             {
-                Console.WriteLine($"Error loading {dll.Name}");
+                await _log.Error($"Core",$"Error loading {dll.Name}");
             }
             foreach (var module in plugin.Modules)
             {
@@ -210,7 +214,7 @@ public class Sentinel
         
         foreach (var module in _modules)
         {
-            Console.WriteLine("Loading " + module.GetType());
+            await _log.Info($"Core","Loading " + module.GetType());
             module.ModuleLoad(this);
         }
     }
@@ -227,7 +231,7 @@ public class Sentinel
 
     private async Task Init()
     {
-        Console.WriteLine("Initialising");
+        await _log.Info("Core","Initialising");
         //setup interaction service
         var isc = new InteractionServiceConfig()
         {
@@ -249,6 +253,7 @@ public class Sentinel
         srv.AddSingleton(_deleter);
         srv.AddSingleton(_textcat);
         srv.AddSingleton(_random);
+        srv.AddSingleton(_log);
         
         //add dbcontext to dependency inj.
         string DbPath = $@"{_config.DataDirectory}/data.sqlite";
@@ -318,7 +323,8 @@ public class Sentinel
             {
                 await ctx.Interaction.RespondAsync("Something went wrong (many such cases)", ephemeral: true);
             }
-            Console.WriteLine(result.ErrorReason);
+
+            await _log.Error($"/{cmd.Name}", $"Error: {result.ErrorReason}");
         }
         return;
     }
@@ -427,7 +433,6 @@ public class Sentinel
             if (nAfter != null && nAfter.ToUpper().Contains("CHRISTMAS"))
             {
                 await after.ModifyAsync(properties => properties.Nickname = "[REDACTED]");
-                Console.WriteLine("Anti-Christmas Aktion");
             }
 
             if (user.Nicklock != "" && srv.FunnyCommands)
@@ -437,12 +442,12 @@ public class Sentinel
                     user.Nicklock = "";
                     user.NicklockUntil = null;
                     await data.SaveChangesAsync();
-                    Console.WriteLine("Ended lock");
+                    await _log.Fine("Core",$"Nicklock for {after.Username} ended");
                     return;
                 }
                 if(nAfter == user.Nicklock) return;
                 await after.ModifyAsync(properties => properties.Nickname = user.Nicklock);
-                Console.WriteLine("Reverted nickchange");
+                await _log.Fine("Core",$"Reverted {after.Username} nickname change");
             }
         }
     }
@@ -453,57 +458,6 @@ public class Sentinel
         if (timeout < DateTimeOffset.Now) return false;
         return true;
     }
-
-    private async Task ProtectRoles(Cacheable<SocketGuildUser, ulong> before, SocketGuildUser after, ulong tamperid)
-    {
-        try
-        {
-            if(after.Guild.Id != 988430253972140062) return;
-            var protectedRole = after.Guild.GetRole(tamperid);
-            if (after.Roles.Contains(protectedRole) != before.Value.Roles.Contains(protectedRole))
-            {
-                bool tamper = false;
-                await foreach (var entries in after.Guild.GetAuditLogsAsync(1))
-                {
-                    var entry = entries.First();
-                    if (entry.Action == ActionType.MemberRoleUpdated)
-                    {
-                        if (entry.User.Id != 241325827810131978 && entry.User.Id != _discord.CurrentUser.Id)
-                        {
-                            Console.WriteLine("Role Tampering Detected");
-                            tamper = true;
-                        }
-                    }
-                }
-
-                if (tamper)
-                {
-                    if (before.Value.Roles.Contains(protectedRole))
-                    {
-                        await after.AddRoleAsync(protectedRole);
-                    }
-                    else
-                    {
-                        await after.RemoveRoleAsync(protectedRole);
-                    }
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-        
-    }
-    
-    public async Task DMBC5(string msg)
-    {
-        var bc5 = await _discord.GetUserAsync(241325827810131978);
-        var dms = await bc5.CreateDMChannelAsync();
-        await dms.SendMessageAsync(msg);
-    }
-
     private void StartTicking()
     {
         var timer = new System.Timers.Timer(1000);
@@ -527,7 +481,7 @@ public class Sentinel
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    await _log.Error("Tick",$"Scheduled Procedure Failed: {e}");
                 }
             
                 //NICKLOCKS
@@ -538,7 +492,7 @@ public class Sentinel
                     {
                         if (user.NicklockUntil < DateTime.Now)
                         {
-                            Console.WriteLine("Cleared Nicklock");
+                            await _log.Fine("Tick",$"Cleared nicklock for {user.CompositeID}");
                             user.Nicklock = "";
 
                             string? newnick = user.PrevNick;
@@ -554,7 +508,7 @@ public class Sentinel
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Exception in Nicklock Tick: " + e);
+                    await _log.Error("Tick",$"Nicklock Exception: {e}");
                 }
             }
         
@@ -639,7 +593,6 @@ public class Sentinel
                     var match = _regexes.TwitterId.Match(msg.Content);
                     if (match.Success)
                     {
-                        Console.WriteLine("ID: " + match.Groups[1].Value);
                         var thread = await _twitter.GetThread(long.Parse(match.Groups[1].Value));
                         await msg.AddReactionAsync(new Emoji("🧵"));
                         List<Embed>? embeds = await _twitter.ThreadEmbed(thread);
@@ -683,7 +636,7 @@ public class Sentinel
             {
                 if (i is ISlashCommandInteraction sc)
                 {
-                    Console.WriteLine($"/{sc.Data.Name} errored. {result.ErrorReason}");
+                    await _log.Error($"/{sc.Data.Name}",$"Errored: {result.ErrorReason}");
                 }
                 
                 if (result is PreconditionResult)
@@ -696,7 +649,7 @@ public class Sentinel
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            await _log.Error($"Interaction",$"Errored: {e}");
             await i.RespondAsync("Error");
         }
     }
