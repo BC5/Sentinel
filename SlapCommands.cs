@@ -91,8 +91,8 @@ public class SlapCommands : InteractionModuleBase
         embed.WithColor(Color.Green);
         embed.WithDescription($"✅ {user.Mention} has been warned. || {warnreason}");
         
-        await RespondAsync(user.Mention,embed: embed.Build());
         await _data.SaveChangesAsync();
+        await RespondAsync(user.Mention,embed: embed.Build());
     }
 
     [SlashCommand("reducemute",description:"Take 5 minutes off someone's mute duration")]
@@ -245,6 +245,7 @@ public class SlapCommands : InteractionModuleBase
         {
             t.DeflectorExpiry = null;
             u.Francophone = !u.Francophone;
+            await _data.SaveChangesAsync();
             if(u.Francophone)
             {
                 await FollowupAsync(
@@ -258,12 +259,10 @@ public class SlapCommands : InteractionModuleBase
         else
         {
             t.Francophone = !t.Francophone;
+            await _data.SaveChangesAsync();
             if (t.Francophone) await FollowupAsync($"<@{t.UserSnowflake}> parle vous français? Parce que tu dois parler français.");
             else await FollowupAsync($"<@{t.UserSnowflake}> no more frogspeak 🥳");
         }
-
-        await _data.SaveChangesAsync();
-
     }
 
     [UserCommand("Shut Up")]

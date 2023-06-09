@@ -16,6 +16,7 @@ using Sentinel.Archivist;
 using Sentinel.ImageProcessing;
 using Sentinel.ImageProcessing.Operations;
 using Sentinel.Procedures;
+using IResult = Discord.Interactions.IResult;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using PreconditionResult = Discord.Interactions.PreconditionResult;
 
@@ -266,6 +267,9 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(CasinoModule), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
+        //Hook interactions events
+        _interactions.SlashCommandExecuted += SlashCommandExecuted;
+        
         //reg commands
         foreach (ulong server in _config.Servers)
         {
@@ -297,6 +301,19 @@ public class Sentinel
         _discord.ReactionRemoved += DelReact;
         _discord.UserIsTyping += Typing;
         _discord.ModalSubmitted += Modal;
+    }
+
+    private async Task SlashCommandExecuted(SlashCommandInfo cmd, IInteractionContext ctx, IResult result)
+    {
+        if (!result.IsSuccess)
+        {
+            if (!ctx.Interaction.HasResponded)
+            {
+                await ctx.Interaction.RespondAsync("Something went wrong (many such cases)", ephemeral: true);
+            }
+            Console.WriteLine(result.ErrorReason);
+        }
+        return;
     }
 
     private async Task Modal(SocketModal smodal)

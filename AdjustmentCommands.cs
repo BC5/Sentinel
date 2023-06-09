@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Discord;
 using Discord.Interactions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 
 namespace Sentinel;
@@ -14,10 +15,14 @@ public class AdjustmentCommands : InteractionModuleBase
 {
     private Sentinel _core;
     private Data _data;
+
+    private Guid _id;
+    
     public AdjustmentCommands(Sentinel core, Data data)
     {
         _core = core;
         _data = data;
+        _id = Guid.NewGuid();
     }
     
     [SlashCommand("flagchannel","Channel where reports will be flagged")]
@@ -25,8 +30,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.FlagChannel = channel.Id;
-        await RespondAsync($"Flag Channel is now <#{channel.Id}>");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Flag Channel is now <#{channel.Id}>");
     }
 
     [SlashCommand("frenchchannel","Channel where french will be enforced")]
@@ -37,14 +42,15 @@ public class AdjustmentCommands : InteractionModuleBase
         if (srv.FrenchChannel == channel.Id)
         {
             srv.FrenchChannel = null;
+            await _data.SaveChangesAsync();
             await RespondAsync($"French Channel is now disabled");
         }
         else
         {
             srv.FrenchChannel = channel.Id;
+            await _data.SaveChangesAsync();
             await RespondAsync($"French Channel is now <#{channel.Id}>");
         }
-        await _data.SaveChangesAsync();
     }
     
     [SlashCommand("modrole","Adjust role recognised as moderators")]
@@ -52,8 +58,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.ModRole = role.Id;
-        await RespondAsync($"Mod role is now <@&{role.Id}>");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Mod role is now <@&{role.Id}>");
     }
     
     [SlashCommand("idiotrole","Change role for idiots")]
@@ -61,8 +67,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.IdiotRole = role.Id;
-        await RespondAsync($"Idiot role is now <@&{role.Id}>");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Idiot role is now <@&{role.Id}>");
     }
     
     [SlashCommand("idiotsentence","Adjust default idiot sentence")]
@@ -70,8 +76,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.DefaultSentence = TimeSpan.FromDays(days);
-        await RespondAsync($"Default sentence is now {days} days");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Default sentence is now {days} days");
     }
     
     [SlashCommand("mutecost","Change cost of mute")]
@@ -79,8 +85,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.MuteCost = cost;
-        await RespondAsync($"Mute Cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Mute Cost is now £{cost:n0}");
     }
     
     [SlashCommand("frenchcost","Change cost of making someone speak french")]
@@ -88,8 +94,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.FrenchCost = cost;
-        await RespondAsync($"French Cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"French Cost is now £{cost:n0}");
     }
     
     [SlashCommand("1984cost","Change cost of applying censor")]
@@ -97,8 +103,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.Cost1984 = cost;
-        await RespondAsync($"1984 Cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"1984 Cost is now £{cost:n0}");
     }
     
     [SlashCommand("de1984cost","Change cost of removing censor")]
@@ -106,8 +112,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.CostDe1984 = cost;
-        await RespondAsync($"De1984 Cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"De1984 Cost is now £{cost:n0}");
     }
     
     [SlashCommand("nickcost","Change cost of nicklock")]
@@ -115,8 +121,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.NickCost = cost;
-        await RespondAsync($"Nicklock Cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Nicklock Cost is now £{cost:n0}");
     }
     
     [SlashCommand("rewardsize","Change size of random reward")]
@@ -124,8 +130,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.RewardSize = size;
-        await RespondAsync($"Reward Size is now £{size:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Reward Size is now £{size:n0}");
     }
     
     [SlashCommand("warncost","Change cost of /warn")]
@@ -133,8 +139,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.CostWarn = cost;
-        await RespondAsync($"Warn cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Warn cost is now £{cost:n0}");
     }
     
     [SlashCommand("inflation","Adjust all prices by a %")]
@@ -149,8 +155,8 @@ public class AdjustmentCommands : InteractionModuleBase
         srv.MuteCost = (int) (srv.MuteCost * percent);
         srv.NickCost = (int) (srv.NickCost * percent);
         
-        await RespondAsync($"Prices adjusted by {percent-1:P}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Prices adjusted by {percent-1:P}");
     }
     
     [SlashCommand("deflector","Change cost of /warn")]
@@ -158,8 +164,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.DeflectorCost = cost;
-        await RespondAsync($"Deflector cost is now £{cost:n0}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Deflector cost is now £{cost:n0}");
     }
 
     [SlashCommand("rewardchance","Change random chance of rewards")]
@@ -167,8 +173,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.RewardChance = (float) chance;
-        await RespondAsync($"Reward Chance is now {(chance*100):n1}%");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Reward Chance is now {(chance*100):n1}%");
     }
     
     [SlashCommand("usermultiplier","Change user's reward multiplier")]
@@ -177,8 +183,8 @@ public class AdjustmentCommands : InteractionModuleBase
         if(multiplier < 0) return;
         ServerUser usr = await _data.GetServerUser(Context.Guild.Id, user.Id);
         usr.Multiplier = (float) multiplier;
-        await RespondAsync($"{user.Mention}'s Reward Multiplier is now {multiplier:n1}x");
         await _data.SaveChangesAsync();
+        await RespondAsync($"{user.Mention}'s Reward Multiplier is now {multiplier:n1}x");
     }
     
     [SlashCommand(name: "funnycommands", description: "Toggle the abuse commands off while still collecting data to update user balances")]
@@ -186,8 +192,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
         srv.FunnyCommands = !srv.FunnyCommands;
-        await RespondAsync($"Funny commands {(srv.FunnyCommands ? "enabled" : "disabled")}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"Funny commands {(srv.FunnyCommands ? "enabled" : "disabled")}");
     }
     
     [Discord.Interactions.RequireOwner]
@@ -196,8 +202,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerUser usr = await _data.GetServerUser(user);
         usr.Authoritative = !usr.Authoritative;
-        await RespondAsync($"{user.Mention} is now {(usr.Authoritative ? "authoritative" : "a Pleb")}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"{user.Mention} is now {(usr.Authoritative ? "authoritative" : "not authoritative")}");
     }
     
     [SlashCommand(name: "immunity", description: "Toggle user's status as immune to slap commands")]
@@ -205,8 +211,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerUser usr = await _data.GetServerUser(user);
         usr.Immune = !usr.Immune;
-        await RespondAsync($"{user.Mention} {(usr.Immune ? "now" : "no longer")} has immunity");
         await _data.SaveChangesAsync();
+        await RespondAsync($"{user.Mention} {(usr.Immune ? "now" : "no longer")} has immunity");
     }
 
     [SlashCommand(name: "attitude", description: "Set attitude Sentinel will take to a user")]
@@ -214,8 +220,8 @@ public class AdjustmentCommands : InteractionModuleBase
     {
         ServerUser usr = await _data.GetServerUser(user);
         usr.SentinelAttitude = attitude;
-        await RespondAsync($"I'll now treat {user.Mention} {attitude}");
         await _data.SaveChangesAsync();
+        await RespondAsync($"I'll now treat {user.Mention} {attitude}");
     }
 
     [SlashCommand(name: "exportcfg", description: "Export this server's configuration to json")]
