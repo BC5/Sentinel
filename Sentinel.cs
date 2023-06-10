@@ -94,6 +94,11 @@ public class Sentinel
         //pause
         await Task.Delay(-1);
     }
+
+    public SentinelLogging GetLogger()
+    {
+        return _log;
+    }
     
     public Data GetDb()
     {
@@ -135,13 +140,13 @@ public class Sentinel
     private async Task Log(LogMessage msg)
     {
         LogEntry entry = new LogEntry(msg.Source, msg.Message, SentinelLogging.FromSeverity(msg.Severity));
-        await _log.Log(entry);
+        await _log.LogAsync(entry);
     }
     
     private async Task InteractionLog(LogMessage msg)
     {
         LogEntry entry = new LogEntry(msg.Source, msg.Message, SentinelLogging.FromSeverity(msg.Severity));
-        await _log.Log(entry);
+        await _log.LogAsync(entry);
     }
 
     public DiscordSocketClient GetClient()

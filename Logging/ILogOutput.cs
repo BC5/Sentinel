@@ -2,7 +2,8 @@
 
 public interface ILogOutput
 {
-    public Task Log(LogEntry entry);
+    public Task LogAsync(LogEntry entry);
+    public void Log(LogEntry log);
 
     public void SetLogLevel(LogType level);
 }

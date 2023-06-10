@@ -14,35 +14,49 @@ public class SentinelLogging
         
     }
 
-    public async Task Log(LogEntry log)
+    public async Task LogAsync(LogEntry log)
     {
         if (LogEntries != null) LogEntries.Add(log);
         List<Task> tasks = new();
         foreach (var o in LogOutputs)
         {
-            tasks.Add(o.Log(log));
+            tasks.Add(o.LogAsync(log));
         }
         await Task.WhenAll(tasks);
     }
 
-    public Task Log(LogType level, string source, string message)
+    public Task LogAsync(LogType level, string source, string message)
     {
-        return Log(new LogEntry(source,message));
+        return LogAsync(new LogEntry(source,message));
+    }
+
+    public void Log(LogEntry log)
+    {
+        if (LogEntries != null) LogEntries.Add(log);
+        foreach (var o in LogOutputs)
+        {
+            o.Log(log);
+        }
+    }
+    
+    public void Log(LogType level, string source, string message)
+    {
+        Log(new LogEntry(source,message));
     }
 
     public Task Info(string source, string message)
     {
-        return Log(LogType.Info, source, message);
+        return LogAsync(LogType.Info, source, message);
     }
     
     public Task Fine(string source, string message)
     {
-        return Log(LogType.Fine, source, message);
+        return LogAsync(LogType.Fine, source, message);
     }
     
     public Task Error(string source, string message)
     {
-        return Log(LogType.Error, source, message);
+        return LogAsync(LogType.Error, source, message);
     }
 
     public static LogType FromSeverity(LogSeverity severity)

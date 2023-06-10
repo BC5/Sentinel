@@ -8,6 +8,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using ImageMagick;
 using Microsoft.EntityFrameworkCore;
+using Sentinel.Logging;
 using Tesseract;
 
 namespace Sentinel.Archivist;
@@ -26,10 +27,13 @@ public class OCRManager
     private IMessage? _lastMessageIndexed;
     private IUser _indexingInvoker;
     private DateTime _indexingStart;
+
+    private SentinelLogging _log;
     
     public OCRManager(string tessdata, Sentinel core)
     {
         _core = core;
+        _log = core.GetLogger();
         _sha = SHA1.Create();
         _http = new();
         _tess = TessSetup(tessdata, "eng");
@@ -40,21 +44,21 @@ public class OCRManager
     {
         try
         {
-            return new TesseractEngine(tessdata, lang);
+            var te = new TesseractEngine(tessdata, lang);
+
+            //Configure
+            te.SetVariable("user_defined_dpi", 100);
+            te.SetVariable("debug_file", "NUL");
+            te.SetVariable("tessedit_char_whitelist", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"£$%&*()@#';:?/,.+=-_");
+            
+            return te;
         }
         catch (TargetInvocationException e)
         {
             if (e.InnerException is DllNotFoundException)
             {
-                Console.WriteLine("Couldn't find libraries");
-                if (File.Exists("/.dockerenv"))
-                {
-                    Console.WriteLine("We're in a docker container");
-                    Console.WriteLine("libleptonica found: "  + File.Exists("/app/x64/libleptonica-1.80.0.so"));
-                    Console.WriteLine("libtesseract found: "  + File.Exists("/app/x64/libtesseract41.so"));
-                }
+                _log.Log(LogType.Error,"OCR","Couldn't find Tesseract libraries.");
             }
-            
             throw;
         }
     }
@@ -75,7 +79,7 @@ public class OCRManager
             IMessage[] msgs = (await msgEnumerable.FlattenAsync()).ToArray();
             if(msgs == null) return;
             if(_indexing == null) return;
-            Console.WriteLine($"Fetched {msgs.Length} more messages from #{_indexing.Name}");
+            await _log.Fine("OCR", $"Fetched {msgs.Length} more messages from #{_indexing.Name}");
             if (msgs.Length == 0)
             {
                 await _indexing.SendMessageAsync(
@@ -149,7 +153,7 @@ public class OCRManager
                 var results = await data.OcrEntries.Where(m => m.Message == msg.Id).ToListAsync();
                 if (results.Count > 0)
                 {
-                    Console.WriteLine("Already indexed message. Skipping.");
+                    await _log.Fine("OCR", $"Already indexed message {msg.Id}. Skipping");
                     await PostProcess(msg);
                     return;
                 }
@@ -214,28 +218,28 @@ public class OCRManager
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                await _log.Error("OCR", $"Error Downloading: {e}");
                 return;
             }
 
             if (response.StatusCode != HttpStatusCode.OK)
             {
-                Console.WriteLine($"Downloading {imgurl} gave response of {response.StatusCode}");
+                await _log.Error("OCR", $"Couldn't download {imgurl}, server gave response {response.StatusCode}");
                 return;
             }
 
-            Console.WriteLine("Downloaded");
+            await _log.Fine("OCR", $"Downloaded {imgurl}");
             byte[] imagedata = await response.Content.ReadAsByteArrayAsync();
 
             if (response.Content.Headers.ContentType == null)
             {
-                Console.WriteLine("No ContentType on " + imgurl);
+                await _log.Fine("OCR", $"No ContentType on {imgurl}");
                 return;
             }
             string? mimetype = response.Content.Headers.ContentType.MediaType;
             if (mimetype == null)
             {
-                Console.WriteLine("No MIME Type on " + imgurl);
+                await _log.Fine("OCR", $"No MIME Type on {imgurl}");
                 return;
             }
 
@@ -254,7 +258,7 @@ public class OCRManager
                     image = new MagickImage(imagedata, MagickFormat.WebP);
                     break;
                 default:
-                    Console.WriteLine($"Unsupported MIME Type {mimetype}");
+                    await _log.Fine("OCR", $"Unsupported MIME type {mimetype} on {imgurl}");
                     return;
             }
         
@@ -290,7 +294,7 @@ public class OCRManager
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            await _log.Error("OCR", $"OCR Error: {e}");
         }
     }
     
@@ -317,7 +321,7 @@ public class OCRManager
                 };
                 await data.OcrEntries.AddAsync(newentry);
                 await data.SaveChangesAsync();
-                Console.WriteLine("Matched URL");
+                await _log.Fine("OCR", $"URL Matched to database: {url}");
                 return true;
             }
 
@@ -345,7 +349,7 @@ public class OCRManager
                 };
                 await db.OcrEntries.AddAsync(newentry);
                 await db.SaveChangesAsync();
-                Console.WriteLine("Matched Hash");
+                await _log.Fine("OCR", $"Image hash matched to database: {url}");
                 return true;
             }
 

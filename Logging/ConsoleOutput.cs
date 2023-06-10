@@ -4,7 +4,12 @@ public class ConsoleOutput : ILogOutput
 {
     public LogType LogLevel { get; set; } = LogType.Info | LogType.Debug | LogType.Critical;
     
-    public async Task Log(LogEntry entry)
+    public async Task LogAsync(LogEntry entry)
+    {
+        Log(entry);
+    }
+
+    public void Log(LogEntry entry)
     {
         if((LogLevel & entry.Level) == entry.Level)
         {
