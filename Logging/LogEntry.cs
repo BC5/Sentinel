@@ -2,7 +2,7 @@
 
 public class LogEntry
 {
-    public DateTime Timestamp { get; set; } = DateTime.Now;
+    public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.Now;
     public LogType Level { get; set; }
         
     public string Source { get; set; }

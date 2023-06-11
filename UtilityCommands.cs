@@ -7,6 +7,7 @@ using Discord.Webhook;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Sentinel.Archivist;
+using Sentinel.Logging;
 using Sentinel.Procedures;
 using ContextType = Discord.Commands.ContextType;
 
@@ -18,13 +19,15 @@ public class UtilityCommands : InteractionModuleBase
     private OCRManager _ocr;
     private ProcedureScheduler _procSched;
     private Data _data;
+    private SentinelLogging _log;
 
-    public UtilityCommands(Sentinel sentinel, OCRManager ocr, ProcedureScheduler procSched, Data data)
+    public UtilityCommands(Sentinel sentinel, OCRManager ocr, ProcedureScheduler procSched, Data data, SentinelLogging log)
     {
         _core = sentinel;
         _ocr = ocr;
         _procSched = procSched;
         _data = data;
+        _log = log;
     }
 
     [Discord.Interactions.RequireOwner]
@@ -35,6 +38,59 @@ public class UtilityCommands : InteractionModuleBase
         var whc = new DiscordWebhookClient(url);
         await whc.SendMessageAsync(message);
         await RespondAsync("Done", ephemeral: true);
+    }
+    
+    [Discord.Interactions.RequireOwner]
+    [SlashCommand(name: "logs", description: "Get some log entries")]
+    public async Task FetchLogs(int fetch = 10, LogType level = LogType.Info, bool ephemeral = false, TimestampType timestamps = TimestampType.DateAndTime)
+    {
+        LogType levelFlag = SentinelLogging.GetLogLevelFlag(level);
+        await _log.Info("/logs",$"{Context.User.Username} accessed logs ({fetch} entries, {level})");
+        string log = "Logs:\n";
+
+        if (_log.LogEntries == null)
+        {
+            await RespondAsync("Logs are not being cached.",ephemeral: ephemeral);
+            return;
+        }
+        
+        int start = Math.Max(0, _log.LogEntries.Count-fetch);
+        int j = 0;
+
+        char ts = 'R';
+        switch (timestamps)
+        {
+            case TimestampType.Relative:
+                ts = 'R';
+                break;
+            case TimestampType.Time:
+                ts = 'T';
+                break;
+            case TimestampType.DateAndTime:
+                ts = 'f';
+                break;
+        }
+        
+        for (int i = start; i < _log.LogEntries.Count; i++)
+        {
+            var entry = _log.LogEntries[i];
+            if ((levelFlag & entry.Level) == entry.Level)
+            {
+                log = log + $"<t:{entry.Timestamp.ToUnixTimeSeconds()}:{ts}> `[{entry.Source}] {entry.Message}\n`";
+                j++;
+            }
+        }
+
+        log = log + $"**{j} entries returned out of {_log.LogEntries.Count}**";
+        
+        await RespondAsync(log,ephemeral: ephemeral);
+    }
+
+    public enum TimestampType
+    {
+        Relative,
+        Time,
+        DateAndTime
     }
 
     [Discord.Interactions.RequireOwner]
