@@ -16,9 +16,10 @@ public class NewMessageHandler
     private Config _config;
     private Random _random;
     private TextCat _textcat;
+    private MessageManagement _msgMgr;
 
     public NewMessageHandler(DiscordSocketClient discord, Sentinel core, OCRManager ocr, Sentinel.Regexes regex,
-        Detention detention, Config conf, Random rand, TextCat textcat)
+        Detention detention, Config conf, Random rand, TextCat textcat, MessageManagement msgMgr)
     {
         _discord = discord;
         _core = core;
@@ -28,6 +29,7 @@ public class NewMessageHandler
         _config = conf;
         _random = rand;
         _textcat = textcat;
+        _msgMgr = msgMgr;
     }
     
     public async Task NewMessage(SocketMessage msg)
@@ -36,6 +38,7 @@ public class NewMessageHandler
         {
             //Start voicenote download
             Task voiceNote = StashVoiceNote(msg);
+            Task msgMgr = _msgMgr.MessageLog(msg);
 
             if (!(msg.Channel is SocketGuildChannel)) return;
             SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
@@ -66,23 +69,21 @@ public class NewMessageHandler
             //AntiChristmas
             //await AntiChristmas(msg);
 
-            //No bot messages past this point
-            if (msg.Author.IsBot)
+            //No bot messages
+            if (!msg.Author.IsBot)
             {
-                await data.SaveChangesAsync();
-                return;
+                //Apply censor
+                await Censor(msg, user, srv);
+
+                //Apply Frenchification
+                await Francais(msg, user, srv, _textcat);
             }
-
-            //Apply censor
-            await Censor(msg, user, srv);
-
-            //Apply Frenchification
-            await Francais(msg, user, srv, _textcat);
-
-            await data.SaveChangesAsync();
-
-            //Await voicenote
+            
+            //Await pending tasks
             await voiceNote;
+            await msgMgr;
+            //Save changes
+            await data.SaveChangesAsync();
         }
     }
 

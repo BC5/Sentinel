@@ -1,11 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.Contracts;
-using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Transactions;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -182,6 +179,7 @@ public class Data : DbContext
             .Include(y => y.Censor)
             .Include(y => y.AutoResponses)
             .Include(y => y.Quotes)
+            .Include(y => y.PurgeConfig)
             .ToListAsync();
         if (results.Count != 0)
         {
@@ -332,6 +330,7 @@ public class ServerConfig
     public List<CensorEntry> Censor { get; set; } = new List<CensorEntry>();
     public List<AutoResponse> AutoResponses { get; set; } = new List<AutoResponse>();
     public List<QuoteEntry> Quotes { get; set; } = new List<QuoteEntry>();
+    public List<PurgeConfiguration> PurgeConfig { get; set; } = new List<PurgeConfiguration>();
     public ulong? IdiotRole { get; set; }
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
     public ulong? FrenchChannel { get; set; }
@@ -518,6 +517,14 @@ public class QuoteEntry
     public int Id { get; set; }
     public ulong ServerId { get; set; }
     public string Text { get; set; } = "";
+}
+
+public class PurgeConfiguration
+{
+    [Key]
+    public int ConfigurationID { get; set; }
+    public ulong ChannelID { get; set; }
+    public DateTimeOffset LastPurge { get; set; }
 }
 
 public class Vote

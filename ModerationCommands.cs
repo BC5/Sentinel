@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Autofac.Core;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 
@@ -53,6 +54,32 @@ public class ModerationCommands : InteractionModuleBase
         
     }
     */
+
+    [RequireUserPermission(GuildPermission.Administrator)]
+    [SlashCommand("autopurge","Setup autopurge for a channel")]
+    public async Task SetupPurge(ITextChannel channel)
+    {
+        ServerConfig scfg = await _data.GetServerConfig(Context.Guild.Id);
+
+        PurgeConfiguration? existing = scfg.PurgeConfig.FirstOrDefault(x => x.ChannelID == channel.Id);
+
+        if (existing != null)
+        {
+            scfg.PurgeConfig.Remove(existing);
+            await RespondAsync($"I won't autopurge {channel.Mention} anymore");
+        }
+        else
+        {
+            var pc = new PurgeConfiguration()
+            {
+                ChannelID = channel.Id,
+                LastPurge = DateTimeOffset.UnixEpoch
+            };
+            scfg.PurgeConfig.Add(pc);
+            await RespondAsync($"{channel.Mention} now set to autopurge");
+        }
+        await _data.SaveChangesAsync();
+    }
 
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("idiot","Brand a user with the idiot role")]

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Data;
+using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -42,6 +43,7 @@ public class Sentinel
     private TwitterManager _twitter;
     private MassDeleter _deleter;
     private TextCat _textcat;
+    private MessageManagement _messageManager;
 
     private ulong _ticks = 0;
 
@@ -118,6 +120,7 @@ public class Sentinel
         
         _configfile = cfgloc;
         _config = conf;
+        _messageManager = new(this,_log);
         _procScheduler = new ProcedureScheduler(this,_config);
         _modules = new();
         _textcat = new(@$"{conf.DataDirectory}/ntextcat/languagemodel.xml");
@@ -185,7 +188,7 @@ public class Sentinel
         await _discord.StartAsync();
         
         //create New Message handler
-        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random, _textcat);
+        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random, _textcat, _messageManager);
         
         //Hook remaining events
         HookEvents();
@@ -318,6 +321,18 @@ public class Sentinel
         _discord.ReactionRemoved += DelReact;
         _discord.UserIsTyping += Typing;
         _discord.ModalSubmitted += Modal;
+        _discord.MessageDeleted += Deleted;
+        _discord.MessagesBulkDeleted += BulkDeleted;
+    }
+
+    private async Task BulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> msgs, Cacheable<IMessageChannel, ulong> channel)
+    {
+        await _messageManager.MessagesRemove(msgs);
+    }
+
+    private async Task Deleted(Cacheable<IMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel)
+    {
+        await _messageManager.MessageRemove(msg);
     }
 
     private async Task SlashCommandExecuted(SlashCommandInfo cmd, IInteractionContext ctx, IResult result)
@@ -399,6 +414,7 @@ public class Sentinel
         //await _newMessageHandler.AntiChristmas(msg);
         using (var data = GetDb())
         {
+            Task msgMgr = _messageManager.MessageAlter(msg);
             if(msg.Author.IsBot) return;
             if(!(msg.Channel is SocketGuildChannel)) return;
             SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
@@ -415,6 +431,9 @@ public class Sentinel
         
             //Apply Frenchification
             await NewMessageHandler.Francais(msg, user,srv,_textcat);
+            
+            //Await pending tasks
+            await msgMgr;
         }
         
     }
@@ -470,13 +489,72 @@ public class Sentinel
         timer.AutoReset = true;
         timer.Enabled = true;
     }
+
+    private async Task DoPurge(Data data)
+    {
+        SocketGuild? guild = null;
+        PurgeConfiguration? pconf = null;
+                
+        foreach (var g in _discord.Guilds)
+        {
+            if(g == null) continue;
+            var srv = await data.GetServerConfig(g.Id);
+            foreach (var pc in srv.PurgeConfig)
+            {
+                if (DateTimeOffset.Now - pc.LastPurge > TimeSpan.FromDays(1))
+                {
+                    guild = g;
+                    pconf = pc;
+                    break;
+                }
+            }
+            if(pconf != null) break;
+        }
+
+        if (pconf != null && guild != null)
+        {
+            pconf.LastPurge = DateTimeOffset.Now;
+            ITextChannel channel = guild.GetTextChannel(pconf.ChannelID);
+
+            List<ulong> purge = await _messageManager.GetMessagesToPurge(guild.Id, channel.Id);
+            //Deduplicate
+            purge = purge.Distinct().ToList();
+            
+            await _log.Info("Tick", $"Purging {purge.Count} messages from #{channel.Name} in {guild.Name}");
+            
+            try
+            {
+                var opt = new RequestOptions()
+                {
+                    AuditLogReason = "Automated Purge"
+                };
+                await channel.DeleteMessagesAsync(purge, opt);
+            }
+            catch (Exception e)
+            {
+                await _log.Error("Tick",$"Error purging {channel.Name} in {guild.Name}: {e}");
+            }
+        }
+        else
+        {
+            await _log.Fine("Tick","No purges pending");
+        }
+    }
     
     private async void Tick(object? sender, ElapsedEventArgs elapsedEventArgs)
     {
         _ticks++;
-        //Every 30s
         using (var data = GetDb())
         {
+            //Once an hour
+            Task? purgeTask = null;
+            if (_ticks % 3600 == 50)
+            {
+                purgeTask = DoPurge(data);
+            }
+            
+            
+            //Every 30s
             if (_ticks % 30 == 0)
             {
                 //PROCEDURE SCHEDULER
@@ -518,7 +596,7 @@ public class Sentinel
             }
         
             //Every minute
-            if (_ticks % 60 == 0)
+            if (_ticks % 60 == 1)
             {
                 _detention.Tick();
             }
@@ -535,6 +613,9 @@ public class Sentinel
             //Every second
             await _ocr.TryNext();
             await JuveChecks();
+            
+            //Await pending tasks
+            if (purgeTask != null) await purgeTask;
         }
     }
 
