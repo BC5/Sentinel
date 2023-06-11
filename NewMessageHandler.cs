@@ -142,11 +142,16 @@ public class NewMessageHandler
 
     public async Task Attitude(SocketMessage msg, ServerUser.Attitude attitude)
     {
-        if (attitude == ServerUser.Attitude.Belligerent)
+        if (attitude == ServerUser.Attitude.Belligerent && msg is IUserMessage um)
         {
-            if (_random.Next(50) == 20 && msg is IUserMessage um)
+            if (_random.Next(50) == 20)
             {
                 await um.ReplyAsync(_config.GetBelligerentResponse());
+            }
+            else if(_random.Next(75) == 30)
+            {
+                await um.ReplyAsync("deleting this. kys.");
+                await um.DeleteAsync();
             }
         }
     }
