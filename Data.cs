@@ -164,6 +164,7 @@ public class Data : DbContext
             .Include(y => y.Censor)
             .Include(y => y.AutoResponses)
             .Include(y => y.Quotes)
+            .Include(y => y.PurgeConfig)
             .ToListAsync();
         if (results.Count == 0)
         {

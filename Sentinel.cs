@@ -116,7 +116,10 @@ public class Sentinel
     public Sentinel(Config conf, string cfgloc)
     {
         _log = new SentinelLogging();
-        _log.LogOutputs.Add(new ConsoleOutput());
+
+        var console = new ConsoleOutput();
+        console.SetLogLevel(LogType.Debug);
+        _log.LogOutputs.Add(console);
         
         _configfile = cfgloc;
         _config = conf;
@@ -245,7 +248,7 @@ public class Sentinel
         {
             UseCompiledLambda = true
         };
-        _interactions = new InteractionService(_discord);
+        _interactions = new InteractionService(_discord, isc);
         
 
         //setup dependency inj.
@@ -497,7 +500,11 @@ public class Sentinel
                 
         foreach (var g in _discord.Guilds)
         {
-            if(g == null) continue;
+            if (g == null)
+            {
+                await _log.Fine("Tick","null guild");
+                continue;
+            }
             var srv = await data.GetServerConfig(g.Id);
             foreach (var pc in srv.PurgeConfig)
             {
@@ -505,7 +512,12 @@ public class Sentinel
                 {
                     guild = g;
                     pconf = pc;
+                    await _log.Fine("Tick", $"Eligible for purge {pc.ChannelID} : {(DateTimeOffset.Now - pc.LastPurge).Days} days ago");
                     break;
+                }
+                else
+                {
+                    await _log.Fine("Tick",$"{pc.ChannelID} : {(DateTimeOffset.Now - pc.LastPurge).Days} days ago");
                 }
             }
             if(pconf != null) break;
@@ -616,6 +628,7 @@ public class Sentinel
             
             //Await pending tasks
             if (purgeTask != null) await purgeTask;
+            await data.SaveChangesAsync();
         }
     }
 

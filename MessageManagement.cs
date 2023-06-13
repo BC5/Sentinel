@@ -78,9 +78,21 @@ public class MessageManagement
         {
             ulong before = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(7));
             ulong after = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(13.9));
-            var msgs = await log.MessageLog.Where(x => x.ServerId == guild && x.ChannelId == channel && x.MessageId < before && x.MessageId > after)
-                .Select(x => x.MessageId).ToListAsync();
-            return msgs;
+            
+            /*
+            var msgs = await log.MessageLog
+                .Where(x => x.ServerId == guild && x.ChannelId == channel && x.MessageId < before && x.MessageId > after)
+                .ToListAsync();
+            */
+            
+            var msgs = await log.MessageLog.FromSql(
+                $"SELECT * FROM MessageLog WHERE ServerId = {guild} AND ChannelId = {channel} AND MessageId BETWEEN {after} AND {before}")
+                .ToListAsync();
+            
+            //WHERE ServerId = 1019326226713817138 AND ChannelId = 1117577557810892880 AND MessageId BETWEEN 1117980257174167604 AND 1117981435945549824
+            
+            
+            return msgs.Select(x => x.MessageId).ToList();
         }
     }
 
