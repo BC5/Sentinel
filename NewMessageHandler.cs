@@ -291,8 +291,9 @@ public class NewMessageHandler
             if (CensorCheck(msg, srv))
             {
                 await msg.DeleteAsync();
+                await ((IGuildUser) msg.Author).SetTimeOutAsync(TimeSpan.FromSeconds(30));
                 var dms = await msg.Author.CreateDMChannelAsync();
-                await dms.SendMessageAsync("Oopsie! You fell afoul of the censor!\n- Use /censor check in the server to see the rules\n- Or free yourself for £100 with /censor free");
+                await dms.SendMessageAsync($"Oopsie! You fell afoul of the censor!\n- Use /censor check in the server to see the rules\n- Or free yourself for £{srv.CostDe1984:n0} with /censor free");
             }
         }
     }
