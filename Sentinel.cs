@@ -287,6 +287,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(ElectionCommand), _services);
         await _interactions.AddModuleAsync(typeof(RebuildCommand), _services);
         await _interactions.AddModuleAsync(typeof(CasinoModule), _services);
+        await _interactions.AddModuleAsync(typeof(SocialCreditCommands), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //Hook interactions events

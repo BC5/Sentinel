@@ -20,6 +20,7 @@ public class Data : DbContext
     public DbSet<Reaction> ReactLog { get; set; }
     public DbSet<OCREntry> OcrEntries { get; set; }
     public DbSet<ElectionBallot> Ballots { get; set; }
+    public DbSet<SocialCreditEntry> SocialCreditLog { get; set; }
 
     [NotMapped] public string DbPath { get; } = "";
     
@@ -242,6 +243,7 @@ public class ServerUser
     public int Balance { get; set; } = 0;
     public float Multiplier { get; set; } = 1.0f;
     public string Nicklock { get; set; } = "";
+    public long SocialCredit { get; set; } = 0;
     public string? PrevNick { get; set; } = "";
     public DateTime? NicklockUntil { get; set; }
     public bool Authoritative { get; set; } = false;
@@ -254,6 +256,20 @@ public class ServerUser
     public DateTime? DeflectorExpiry { get; set; }
     public Attitude SentinelAttitude { get; set; } = Attitude.Neutral;
 
+
+    public void SocialCreditUpdate(Data data, long amount, string reason)
+    {
+        SocialCredit = SocialCredit + amount;
+        var sc = new SocialCreditEntry()
+        {
+            Points = amount,
+            Reason = reason,
+            UserId = UserSnowflake,
+            ServerId = ServerSnowflake
+        };
+        data.SocialCreditLog.Add(sc);
+    }
+    
     public bool ValidDeflector()
     {
         if (DeflectorExpiry == null) return false;
@@ -526,6 +542,17 @@ public class PurgeConfiguration
     public int ConfigurationID { get; set; }
     public ulong ChannelID { get; set; }
     public DateTimeOffset LastPurge { get; set; }
+}
+
+public class SocialCreditEntry
+{
+    [Key]
+    public int EntryId { get; set; }
+    public ulong UserId { get; set; }
+    public ulong ServerId { get; set; }
+    
+    public long Points { get; set; }
+    public string Reason { get; set; }
 }
 
 public class Vote
