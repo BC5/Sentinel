@@ -24,8 +24,8 @@ public class SocialCreditCommands : InteractionModuleBase
         var eb = new EmbedBuilder();
         eb.WithTitle($"Social Credit Report for {target.DisplayName}");
 
-        eb.AddField("Social Credits",$"{su.SocialCredit:n0}");
-        eb.AddField("Classification", FriendlyClassName(GetClass(su.SocialCredit)));
+        eb.AddField("Social Credits",$"{su.SocialCredit:n0}",true);
+        eb.AddField("Classification", FriendlyClassName(GetClass(su.SocialCredit)),true);
         
         var log = await _data.SocialCreditLog.Where(x => x.UserId == target.Id && x.ServerId == Context.Guild.Id).ToListAsync();
         foreach (var l in log.TakeLast(5))
