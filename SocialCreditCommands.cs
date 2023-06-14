@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using FFMpegCore.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Sentinel;
 
@@ -12,6 +13,29 @@ public class SocialCreditCommands : InteractionModuleBase
     public SocialCreditCommands(Data data)
     {
         _data = data;
+    }
+
+    [SlashCommand("creditreport","Check a social credit score")]
+    public async Task CreditReport(IGuildUser? target)
+    {
+        if (target == null) target = (IGuildUser) Context.User;
+
+        var su = await _data.GetServerUser(target);
+        var eb = new EmbedBuilder();
+        eb.WithTitle($"Social Credit Report for {target.DisplayName}");
+
+        eb.AddField("Social Credits",$"{su.SocialCredit:n0}");
+        eb.AddField("Classification", FriendlyClassName(GetClass(su.SocialCredit)));
+        
+        var log = await _data.SocialCreditLog.Where(x => x.UserId == target.Id && x.ServerId == Context.Guild.Id).ToListAsync();
+        foreach (var l in log.TakeLast(5))
+        {
+            eb.AddField($"{l.Points:n0} Credits", l.Reason);
+        }
+        eb.WithColor(0, 0, 125);
+        eb.WithAuthor(target.DisplayName, target.GetDisplayAvatarUrl());
+
+        await RespondAsync(embed: eb.Build());
     }
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
