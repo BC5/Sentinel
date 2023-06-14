@@ -16,11 +16,23 @@ public class SocialCreditCommands : InteractionModuleBase
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("socialcredit","荣耀归中共")]
-    public async Task SocialCredit(IGuildUser target, long points, string reason)
+    public async Task SocialCredit(IGuildUser target, long points, string reason, uint money = 0)
     {
         if (points == 0)
         {
             await RespondAsync("Zero points? Really? That's pretty useless...", ephemeral: true);
+            return;
+        }
+
+        if (money > 1000)
+        {
+            await RespondAsync("You can't reward/fine more than £1000", ephemeral: true);
+            return;
+        }
+
+        if (target.Id == Context.User.Id)
+        {
+            await RespondAsync("No self-reports.", ephemeral: true);
             return;
         }
 
@@ -32,7 +44,15 @@ public class SocialCreditCommands : InteractionModuleBase
         {
             eb.WithTitle("SOCIAL CREDIT INFRACTION");
             eb.AddField("Offense",reason);
-            eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits");
+            if (money != 0)
+            {
+                eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits\nFine of £{money:n0}");
+                await _data.Transact(su, null, (int) money, Transaction.TxnType.SocialCredit);
+            }
+            else
+            {
+                eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits");
+            }
             eb.WithColor(100, 0, 0);
             eb.WithFooter($"YOUR SCORE IS NOW {su.SocialCredit:n0}. CLASSIFICATION: {FriendlyClassName(GetClass(su.SocialCredit)).ToUpper()}");
         }
@@ -40,7 +60,15 @@ public class SocialCreditCommands : InteractionModuleBase
         {
             eb.WithTitle("SOCIAL CREDIT MERIT");
             eb.AddField("Commendation For",reason);
-            eb.AddField("Reward", $"{Math.Abs(points):n0} Social Credits");
+            if (money != 0)
+            {
+                eb.AddField("Reward", $"{Math.Abs(points):n0} Social Credits\nCash Reward of £{money:n0}");
+                await _data.Transact(null, su, (int) money, Transaction.TxnType.SocialCredit);
+            }
+            else
+            {
+                eb.AddField("Reward", $"{Math.Abs(points):n0} Social Credits");
+            }
             eb.WithColor(0, 180, 0);
             eb.WithFooter($"YOUR SCORE IS NOW {su.SocialCredit:n0}. CLASSIFICATION: {FriendlyClassName(GetClass(su.SocialCredit)).ToUpper()}");
         }

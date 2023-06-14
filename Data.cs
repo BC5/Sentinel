@@ -515,7 +515,8 @@ public class Transaction
         Theft,
         Tax,
         StartingBalance,
-        CasinoSlots
+        CasinoSlots,
+        SocialCredit
     }
 
     public enum TxnStatus
