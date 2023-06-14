@@ -46,7 +46,15 @@ public class SocialCreditCommands : InteractionModuleBase
             eb.AddField("Offense",reason);
             if (money != 0)
             {
-                eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits\nFine of £{money:n0}");
+                if (su.Balance < money)
+                {
+                    eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits\nFine of £{money:n0} (You don't have enough. We'll just take everything you've got)");
+                    money = (uint) su.Balance;
+                }
+                else
+                {
+                    eb.AddField("Penalty", $"{Math.Abs(points):n0} Social Credits\nFine of £{money:n0}");
+                }
                 await _data.Transact(su, null, (int) money, Transaction.TxnType.SocialCredit);
             }
             else

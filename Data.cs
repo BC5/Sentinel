@@ -254,7 +254,6 @@ public class ServerUser
     public string RoleBackup { get; set; } = "";
     public DateTime? IdiotedUntil { get; set; }
     public DateTime? DeflectorExpiry { get; set; }
-    public Attitude SentinelAttitude { get; set; } = Attitude.Neutral;
 
 
     public void SocialCreditUpdate(Data data, long amount, string reason)
@@ -275,14 +274,6 @@ public class ServerUser
         if (DeflectorExpiry == null) return false;
         return DeflectorExpiry.Value > DateTime.Now;
     }
-
-    public enum Attitude
-    {
-        Neutral,
-        Friendly,
-        Belligerent 
-    }
-    
 }
 
 

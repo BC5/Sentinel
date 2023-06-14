@@ -215,15 +215,6 @@ public class AdjustmentCommands : InteractionModuleBase
         await RespondAsync($"{user.Mention} {(usr.Immune ? "now" : "no longer")} has immunity");
     }
 
-    [SlashCommand(name: "attitude", description: "Set attitude Sentinel will take to a user")]
-    public async Task SetAttitude(IGuildUser user, ServerUser.Attitude attitude)
-    {
-        ServerUser usr = await _data.GetServerUser(user);
-        usr.SentinelAttitude = attitude;
-        await _data.SaveChangesAsync();
-        await RespondAsync($"I'll now treat {user.Mention} {attitude}");
-    }
-
     [SlashCommand(name: "exportcfg", description: "Export this server's configuration to json")]
     public async Task Export()
     {

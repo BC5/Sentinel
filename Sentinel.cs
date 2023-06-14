@@ -371,8 +371,8 @@ public class Sentinel
             using (var data = GetDb())
             {
                 ServerUser su = await data.GetServerUser(sgu);
-
-                if (su.SentinelAttitude == ServerUser.Attitude.Belligerent)
+                var creditclass = SocialCreditCommands.GetClass(su.SocialCredit);
+                if (creditclass < SocialCreditCommands.CreditClass.Menace)
                 {
                     if (_random.Next(60) == 26)
                     {

@@ -60,8 +60,8 @@ public class NewMessageHandler
             //Do autoresponses
             await AutoResponses(msg, srv);
 
-            //Attitude
-            await Attitude(msg, user.SentinelAttitude);
+            //Social Credit Actions
+            await SocialCreditActions(msg, SocialCreditCommands.GetClass(user.SocialCredit));
 
             //Check for "JUVE"
             if (user.Juvecheck) await JuveCheck(msg);
@@ -141,9 +141,9 @@ public class NewMessageHandler
         _ocr.EnqueueMessage(msg);
     }
 
-    public async Task Attitude(SocketMessage msg, ServerUser.Attitude attitude)
+    public async Task SocialCreditActions(SocketMessage msg, SocialCreditCommands.CreditClass sc)
     {
-        if (attitude == ServerUser.Attitude.Belligerent && msg is IUserMessage um)
+        if (sc < SocialCreditCommands.CreditClass.Nuisance && msg is IUserMessage um)
         {
             if (_random.Next(50) == 20)
             {
