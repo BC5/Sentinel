@@ -95,7 +95,7 @@ public class SocialCreditCommands : InteractionModuleBase
             if (money != 0)
             {
                 eb.AddField("Reward", $"{Math.Abs(points):n0} Social Credits\nCash Reward of £{money:n0}");
-                await _data.Transact(null, su, (int) money, Transaction.TxnType.SocialCredit);
+                await _data.Transact(null, su, (int) money, Transaction.TxnType.SocialCredit, true);
             }
             else
             {
