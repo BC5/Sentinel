@@ -149,7 +149,7 @@ public class NewMessageHandler
             {
                 await um.ReplyAsync(_config.GetBelligerentResponse());
             }
-            else if(_random.Next(75) == 30)
+            else if(sc < SocialCreditCommands.CreditClass.Menace && _random.Next(75) == 30)
             {
                 await um.ReplyAsync("deleting this. kys.");
                 await um.DeleteAsync();

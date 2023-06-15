@@ -39,7 +39,7 @@ public class UtilityCommands : InteractionModuleBase
         await whc.SendMessageAsync(message);
         await RespondAsync("Done", ephemeral: true);
     }
-    
+
     [Discord.Interactions.RequireOwner]
     [SlashCommand(name: "logs", description: "Get some log entries")]
     public async Task FetchLogs(int fetch = 10, LogType level = LogType.Info, bool ephemeral = false, TimestampType timestamps = TimestampType.DateAndTime)
