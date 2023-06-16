@@ -59,7 +59,7 @@ public class ModerationCommands : InteractionModuleBase
 
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("multimute","Mute up to 6 users in one go")]
-    public async Task MultiMute(string reason, int mins, IGuildUser t1, IGuildUser? t2, IGuildUser? t3, IGuildUser? t4, IGuildUser? t5, IGuildUser? t6)
+    public async Task MultiMute(string reason, int mins, IGuildUser t1, IGuildUser? t2 = null, IGuildUser? t3 = null, IGuildUser? t4 = null, IGuildUser? t5 = null, IGuildUser? t6 = null)
     {
         await DeferAsync();
         List<IGuildUser> mutes = new();
