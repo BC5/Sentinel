@@ -206,6 +206,7 @@ public class EconomyCommands : InteractionModuleBase
         await FollowupAsync(embed: eb.Build());
     }
     
+    /*
     [SlashCommand(name: "steal", description: "Attempt a heist. £50 fee. You may lose everything.")]
     public async Task Theft(int amount)
     {
@@ -280,8 +281,8 @@ public class EconomyCommands : InteractionModuleBase
             await _data.Transact(victim, thief, amount, Transaction.TxnType.Theft);
             return;
         }
-
     }
+    */
     
     [SlashCommand(name: "stimulus", description: "Give cash to everyone in a role")]
     public async Task HelicopterMoney(IRole role, int amount)

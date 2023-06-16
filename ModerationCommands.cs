@@ -78,10 +78,10 @@ public class ModerationCommands : InteractionModuleBase
         }
 
         var eb = new EmbedBuilder();
-        eb.WithTitle($"**Muted {mutes.Count} users for {mins} minutes");
-        eb.WithDescription(reason);
+        eb.WithTitle($"Muted {mutes.Count} users for {mins} minutes");
+        eb.WithDescription($"**Reason:** {reason}");
         eb.WithColor(255,0,0);
-        await RespondAsync(pings, embed: eb.Build());
+        await FollowupAsync(pings, embed: eb.Build());
     }
     
 
