@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using ImageMagick;
 
 namespace Sentinel;
 
@@ -54,6 +55,35 @@ public class ModerationCommands : InteractionModuleBase
         
     }
     */
+
+
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("multimute","Mute up to 6 users in one go")]
+    public async Task MultiMute(string reason, int mins, IGuildUser t1, IGuildUser? t2, IGuildUser? t3, IGuildUser? t4, IGuildUser? t5, IGuildUser? t6)
+    {
+        await DeferAsync();
+        List<IGuildUser> mutes = new();
+        mutes.Add(t1);
+        if(t2 != null) mutes.Add(t2);
+        if(t3 != null) mutes.Add(t3);
+        if(t4 != null) mutes.Add(t4);
+        if(t5 != null) mutes.Add(t5);
+        if(t6 != null) mutes.Add(t6);
+
+        string pings = "";
+        foreach (var m in mutes)
+        {
+            pings = pings + m.Mention + " ";
+            await m.SetTimeOutAsync(TimeSpan.FromMinutes(mins), new RequestOptions() {AuditLogReason = $"Multimute by {Context.User.Username}"});
+        }
+
+        var eb = new EmbedBuilder();
+        eb.WithTitle($"**Muted {mutes.Count} users for {mins} minutes");
+        eb.WithDescription(reason);
+        eb.WithColor(255,0,0);
+        await RespondAsync(pings, embed: eb.Build());
+    }
+    
 
     [RequireUserPermission(GuildPermission.Administrator)]
     [SlashCommand("autopurge","Setup autopurge for a channel")]
