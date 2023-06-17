@@ -66,11 +66,46 @@ public class Data : DbContext
         await SaveChangesAsync();
     }
     
-    public List<ServerUser> GetTop(ulong server, int quantity = 10)
+    public List<ServerUser> GetTopBalance(ulong server, int quantity = 10, bool bottom = false)
     {
-        var results = Users.Where(x => x.ServerSnowflake == server)
-            .OrderByDescending(x => x.Balance).Take(quantity).ToList();
-        return results;
+        if (bottom)
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderBy(x => x.Balance).Take(quantity).ToList();
+        }
+        else
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderByDescending(x => x.Balance).Take(quantity).ToList();
+        }
+    }
+    
+    public List<ServerUser> GetTopScore(ulong server, int quantity = 10, bool bottom = false)
+    {
+        if (bottom)
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderBy(x => x.Earnings).Take(quantity).ToList();
+        }
+        else
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderByDescending(x => x.Earnings).Take(quantity).ToList();
+        }
+    }
+    
+    public List<ServerUser> GetTopCredit(ulong server, int quantity = 10, bool bottom = false)
+    {
+        if (bottom)
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderBy(x => x.SocialCredit).Take(quantity).ToList();
+        }
+        else
+        {
+            return Users.Where(x => x.ServerSnowflake == server)
+                .OrderByDescending(x => x.SocialCredit).Take(quantity).ToList();
+        }
     }
     
     public async Task<Transaction.TxnStatus> Transact(ulong? sender, ulong? recipient, ulong server, int amount, Transaction.TxnType type = Transaction.TxnType.Transfer, bool allowDebt = false, bool allowSeizure = false)

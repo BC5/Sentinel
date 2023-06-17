@@ -68,33 +68,6 @@ public class EconomyCommands : InteractionModuleBase
         await FollowupAsync("Reset Complete");
     }
 
-    [SlashCommand(name: "leaderboard", description: "See whose got the most money")]
-    public async Task Leaderboard(int count = 10)
-    {
-        var top10 = _data.GetTop(Context.Guild.Id,count);
-
-        EmbedBuilder eb = new();
-        eb.WithTitle("Top Users by Balance");
-        eb.WithColor(0xFFF700);
-        int i = 1;
-        string leaderboard = "";
-        foreach (var user in top10)
-        {
-            if (user.ServerSnowflake != user.UserSnowflake)
-            {
-                leaderboard = leaderboard + $"**{i}** - <@{user.UserSnowflake}> - £{user.Balance:n0}\n";
-            }
-            else
-            {
-                leaderboard = leaderboard + $"**{i}** - Server - £{user.Balance:n0}\n";
-            }
-            i++;
-        }
-        eb.WithDescription(leaderboard);
-
-        await RespondAsync(embed: eb.Build(), ephemeral: true);
-    }
-    
     [SlashCommand(name: "moneysupply", description: "Check cash in circulation")]
     public async Task MoneySupply()
     {
