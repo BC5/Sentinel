@@ -173,6 +173,18 @@ public class Data : DbContext
         }
     }
 
+    public async Task<ServerUser?> GetServerUserNoCreate(ulong user, ulong server)
+    {
+        var results = await Users.Where(x => x.UserSnowflake == user && x.ServerSnowflake == server).ToListAsync();
+        if (results.Count == 0) return null;
+        return results[0];
+    }
+    
+    public async Task<ServerUser?> GetServerUserNoCreate(IGuildUser user)
+    {
+        return await GetServerUserNoCreate(user.Id, user.Guild.Id);
+    }
+    
     public async Task<ServerUser> GetServerUser(ulong user, ulong server)
     {
         var results = await Users.Where(x => x.UserSnowflake == user && x.ServerSnowflake == server).ToListAsync();
@@ -289,6 +301,8 @@ public class ServerUser
     public string RoleBackup { get; set; } = "";
     public DateTime? IdiotedUntil { get; set; }
     public DateTime? DeflectorExpiry { get; set; }
+    
+    public bool Verified { get; set; } = false;
 
 
     public void SocialCreditUpdate(Data data, long amount, string reason)
@@ -346,17 +360,19 @@ public class Reaction
     }
     
 }
+
 public class ServerConfig
 {
     public ServerConfig(ulong id)
     {
         DiscordID = id;
     }
-    
-    public ServerConfig() {}
-    
-    [Key]
-    public ulong DiscordID { get; set; }
+
+    public ServerConfig()
+    {
+    }
+
+    [Key] public ulong DiscordID { get; set; }
     public ulong? FlagChannel { get; set; }
     public ulong? ModRole { get; set; }
     public int MuteCost { get; set; } = 250;
@@ -379,7 +395,25 @@ public class ServerConfig
     public ulong? FrenchChannel { get; set; }
     public int SlotsPayout { get; set; } = 100;
     public int SlotsFee { get; set; } = 25;
+    public string DefaultRoles { get; set; } = "";
+    public ulong? GeneralChannel { get; set; }
+    public ulong? IdiotChannel { get; set; }
+    public ulong? ArrivalsChannel { get; set; }
+    public string ArrivalMessage { get; set; } = "";
+    public string ApprovalMessage { get; set; } = "";
 
+    
+    public ulong[] DeserialiseRoles()
+    {
+        string[] roleStrings = DefaultRoles.Split(",");
+        ulong[] roles = new ulong[roleStrings.Length];
+        for (int i = 0; i < roleStrings.Length; i++)
+        {
+            roles[i] = ulong.Parse(roleStrings[i]);
+        }
+        return roles;
+    }
+    
     public string GetRandomQuote()
     {
         if (Quotes.Count == 0) return "brain empty 😭. fill me with nonsense.";
