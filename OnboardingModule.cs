@@ -90,6 +90,35 @@ public class OnboardingModule : InteractionModuleBase
         public string? General { get; set; }
         
     }
+
+    [RequireUserPermission(GuildPermission.Administrator)]
+    [SlashCommand("massverify","Add all users with role to verification")]
+    public async Task MassVerification(IRole role)
+    {
+        await DeferAsync();
+        var users = await Context.Guild.GetUsersAsync();
+        int verifications = 0;
+        int already = 0;
+        foreach (var u in users)
+        {
+            if (u != null && u.RoleIds.Contains(role.Id))
+            {
+                var su = await _data.GetServerUser(u);
+                if (!su.Verified)
+                {
+                    su.Verified = true;
+                    verifications++;
+                }
+                else
+                {
+                    already++;
+                }
+                    
+            }
+        }
+        await _data.SaveChangesAsync();
+        await FollowupAsync($"Verified {verifications} users. {already} were already verified.");
+    }
     
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
