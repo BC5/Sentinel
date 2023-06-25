@@ -31,6 +31,14 @@ public class MessageManagement
             }
         }
     }
+
+    public async Task<Logs.Message?> GetMessage(ulong id)
+    {
+        using (var log = GetLogDbContext())
+        {
+            return await log.FetchMessage(id);
+        }
+    }
     
     public async Task MessageLog(IMessage msg)
     {
@@ -158,6 +166,12 @@ public class MessageManagement
             if(dbMessage == null) return;
             dbMessage.Deleted = true;
             if(removed) dbMessage.Removed = true;
+        }
+
+        public async Task<Message?> FetchMessage(ulong id)
+        {
+            Message? dbMessage = await MessageLog.Where(m => m.MessageId == id).SingleOrDefaultAsync();
+            return dbMessage;
         }
         
         public class Message

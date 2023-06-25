@@ -399,10 +399,11 @@ public class ServerConfig
     public ulong? GeneralChannel { get; set; }
     public ulong? IdiotChannel { get; set; }
     public ulong? ArrivalsChannel { get; set; }
+    public ulong? LogChannel { get; set; }
     public string ArrivalMessage { get; set; } = "";
     public string ApprovalMessage { get; set; } = "";
 
-    
+
     public ulong[] DeserialiseRoles()
     {
         string[] roleStrings = DefaultRoles.Split(",");

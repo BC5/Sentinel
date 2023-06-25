@@ -39,6 +39,25 @@ public class UtilityCommands : InteractionModuleBase
         await whc.SendMessageAsync(message);
         await RespondAsync("Done", ephemeral: true);
     }
+    
+    [SlashCommand("logchannel","Channel where logs go")]
+    public async Task LogChannel([ChannelTypes(ChannelType.Text)] IGuildChannel channel)
+    {
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
+
+        if (srv.LogChannel == channel.Id)
+        {
+            srv.LogChannel = null;
+            await _data.SaveChangesAsync();
+            await RespondAsync($"Log Channel is now disabled");
+        }
+        else
+        {
+            srv.LogChannel = channel.Id;
+            await _data.SaveChangesAsync();
+            await RespondAsync($"Log Channel is now <#{channel.Id}>");
+        }
+    }
 
     [Discord.Interactions.RequireOwner]
     [SlashCommand(name: "logs", description: "Get some log entries")]

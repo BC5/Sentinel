@@ -338,7 +338,60 @@ public class Sentinel
 
     private async Task Deleted(Cacheable<IMessage, ulong> msg, Cacheable<IMessageChannel, ulong> channel)
     {
-        await _messageManager.MessageRemove(msg);
+        using (var data = GetDb())
+        {
+            Task mm = _messageManager.MessageRemove(msg);
+            var c = await channel.GetOrDownloadAsync();
+
+            ITextChannel? logChannel = null;
+            
+            if (c is IGuildChannel gc)
+            {
+                var srv = await data.GetServerConfig(gc.GuildId);
+                if (srv.LogChannel != null)
+                {
+                    logChannel = await gc.Guild.GetTextChannelAsync(srv.LogChannel.Value);
+                }
+            }
+            await mm;
+
+            if (logChannel != null)
+            {
+                if (msg.HasValue)
+                {
+                    var m = msg.Value;
+                    var embed = new EmbedBuilder();
+                    embed.WithTitle($"Message Deleted by {m.Author.Mention} in <#{m.Channel.Id}>");
+                    embed.WithAuthor(m.Author);
+                    embed.WithDescription(m.Content);
+                    embed.WithColor(Color.Red);
+                    embed.WithFooter($"A: {m.Author.Id} M: {m.Id}");
+                    await logChannel.SendMessageAsync(embed: embed.Build());
+                }
+                else
+                {
+                    var m = await _messageManager.GetMessage(msg.Id);
+                    if (m == null)
+                    {
+                        var embed = new EmbedBuilder();
+                        embed.WithTitle($"Unknown message removed in <#{channel.Id}>");
+                        embed.WithColor(Color.Red);
+                        embed.WithFooter($"M: {msg.Id}");
+                        await logChannel.SendMessageAsync("Unknown message deleted");
+                    }
+                    else
+                    {
+                        var embed = new EmbedBuilder();
+                        embed.WithTitle($"Message Deleted by <@{m.AuthorId}> in <#{m.ChannelId}>");
+                        embed.WithDescription(m.Content);
+                        embed.WithColor(Color.Red);
+                        embed.WithFooter($"A: {m.AuthorId} M: {m.MessageId}");
+                        await logChannel.SendMessageAsync(embed: embed.Build());
+                    }
+                }
+            }
+            
+        }
     }
 
     private async Task SlashCommandExecuted(SlashCommandInfo cmd, IInteractionContext ctx, IResult result)
