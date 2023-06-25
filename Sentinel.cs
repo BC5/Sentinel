@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Net;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -380,7 +381,7 @@ public class Sentinel
 
             if (logChannel != null && logChannel.Id != channel.Id)
             {
-                if (msg.HasValue)
+                if (msg.HasValue && !msg.Value.Author.IsBot)
                 {
                     var m = msg.Value;
                     var embed = new EmbedBuilder();
@@ -503,7 +504,7 @@ public class Sentinel
             SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
             ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
             
-            if(srv.LogChannel != null && channel.Id != srv.LogChannel.Value)
+            if(srv.LogChannel != null && channel.Id != srv.LogChannel.Value && !msg.Author.IsBot)
             {
                 var logChannel = channel.Guild.GetTextChannel(srv.LogChannel.Value);
                 string before = "`unknown`";
@@ -783,6 +784,86 @@ public class Sentinel
         
             //twitter thread thing
             Task.Run(async () => { await TwitterThread(react, msg); });
+
+            try
+            {
+                await ReactChannels(data, msg, react);
+            }
+            catch (Exception e)
+            {
+                await _log.Error("React", e.ToString());
+            }
+            await data.SaveChangesAsync();
+        }
+    }
+
+    private async Task ReactChannels(Data data, IMessage msg, SocketReaction react)
+    {
+        if(DateTimeOffset.Now - msg.Timestamp > TimeSpan.FromDays(1)) return;
+        if (msg.Channel is IGuildChannel gc)
+        {
+            ServerConfig srv = await data.GetServerConfig(gc.GuildId);
+            foreach (var board in srv.ReactBoards)
+            {
+                string reactname = react.Emote.Name;
+                int reactCount = data.GetMessageReactCount(msg.Id, reactname);
+                
+                if(reactCount < board.Threshold) continue;
+                
+                if (board.Reaction == reactname)
+                {
+                    ITextChannel boardChannel = await gc.Guild.GetTextChannelAsync(board.ChannelId);
+                    var msgs = await boardChannel.GetMessagesAsync(msg.Id, Direction.After, 50).ToListAsync();
+                    IMessage? boardMessage = null;
+                    foreach (var mc in msgs)
+                    {
+                        foreach (var m in mc)
+                        {
+                            if (m.Content.Contains(msg.GetJumpUrl()))
+                            {
+                                boardMessage = m;
+                                break;
+                            }
+                        }
+                        if (boardMessage != null) break;
+                    }
+                    string message = $"{react.Emote} {reactCount} | {msg.GetJumpUrl()}";
+                    if (boardMessage != null && boardMessage is IUserMessage um)
+                    {
+                        await um.ModifyAsync(x => x.Content = message);
+                    }
+                    else
+                    {
+                        var eb = new EmbedBuilder();
+                        eb.WithAuthor(msg.Author);
+                        eb.WithDescription(msg.Content);
+                        eb.WithColor(255, 255, 0);
+
+                        List<FileAttachment> attachments = new();
+                        if (msg.Attachments is {Count: > 0})
+                        {
+                            using var http = new HttpClient();
+                            foreach (var attach in msg.Attachments)
+                            {
+                                using var response = await http.GetAsync(attach.ProxyUrl);
+                                var dat = await response.Content.ReadAsByteArrayAsync();
+                                var ms = new MemoryStream(dat);
+                                attachments.Add(new FileAttachment(ms,attach.Filename));
+                            }
+                        }
+                        
+                        if (attachments.Count > 0)
+                        {
+                            await boardChannel.SendFilesAsync(attachments, message, embed: eb.Build());
+                        }
+                        else
+                        {
+                            await boardChannel.SendMessageAsync(message, embed: eb.Build());
+                        }
+                    }
+                    
+                }
+            }
         }
     }
 

@@ -59,6 +59,39 @@ public class UtilityCommands : InteractionModuleBase
             await RespondAsync($"Log Channel is now <#{channel.Id}>");
         }
     }
+    
+    [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator)]
+    [SlashCommand("reactboard","Setup a react board")]
+    public async Task ReactBoard([ChannelTypes(ChannelType.Text)] IGuildChannel channel, string react, int threshold, bool remove = false)
+    {
+        ServerConfig srv = await _data.GetServerConfig(Context.Guild.Id);
+        if (!remove)
+        {
+            ReactBoardConfig rbc = new ReactBoardConfig()
+            {
+                ChannelId = channel.Id,
+                Reaction = react,
+                Threshold = (uint) threshold
+            };
+            srv.ReactBoards.Add(rbc);
+            await _data.SaveChangesAsync();
+            await RespondAsync($"<#{channel.Id}> will be a {react}board");
+        }
+        else
+        {
+            var rb = srv.ReactBoards.SingleOrDefault(x => x.ChannelId == channel.Id && x.Reaction == react);
+            if (rb == null)
+            {
+                await RespondAsync("Couldn't find a board to delete with those parameters");
+            }
+            else
+            {
+                srv.ReactBoards.Remove(rb);
+                await _data.SaveChangesAsync();
+                await RespondAsync($"<#{channel.Id}> will no longer be a {react}board");
+            }
+        }
+    }
 
     [Discord.Interactions.RequireOwner]
     [SlashCommand(name: "logs", description: "Get some log entries")]

@@ -164,6 +164,11 @@ public class Data : DbContext
         }
     }
 
+    public int GetMessageReactCount(ulong message, string react)
+    {
+        return ReactLog.Count(x => x.MessageId == message && x.ReactName == react);
+    }
+
     public async Task<Transaction.TxnStatus> Transact(ulong? sender, ulong? recipient, ulong server, int amount, Transaction.TxnType type = Transaction.TxnType.Transfer, bool allowDebt = false, bool allowSeizure = false)
     {
         ServerUser? rx = null, tx = null;
@@ -269,6 +274,7 @@ public class Data : DbContext
             .Include(y => y.AutoResponses)
             .Include(y => y.Quotes)
             .Include(y => y.PurgeConfig)
+            .Include(y => y.ReactBoards)
             .ToListAsync();
         if (results.Count == 0)
         {
@@ -285,6 +291,7 @@ public class Data : DbContext
             .Include(y => y.AutoResponses)
             .Include(y => y.Quotes)
             .Include(y => y.PurgeConfig)
+            .Include(y => y.ReactBoards)
             .ToListAsync();
         if (results.Count != 0)
         {
@@ -459,6 +466,7 @@ public class ServerConfig
     public string ArrivalMessage { get; set; } = "";
     public string ApprovalMessage { get; set; } = "";
 
+    public List<ReactBoardConfig> ReactBoards { get; set; } = new();
 
     public ulong[] DeserialiseRoles()
     {
@@ -497,6 +505,16 @@ public class ServerConfig
         }
     }
     
+}
+
+public class ReactBoardConfig
+{
+    [JsonIgnore]
+    [Key] 
+    public int ReactConfigId { get; set; }
+    public ulong ChannelId { get; set; }
+    public string Reaction { get; set; } = "⭐";
+    public uint Threshold { get; set; } = 4;
 }
 
 public class AutoResponse
@@ -656,6 +674,7 @@ public class QuoteEntry
 
 public class PurgeConfiguration
 {
+    [JsonIgnore]
     [Key]
     public int ConfigurationID { get; set; }
     public ulong ChannelID { get; set; }
