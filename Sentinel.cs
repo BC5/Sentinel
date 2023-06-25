@@ -355,15 +355,14 @@ public class Sentinel
             }
             await mm;
 
-            if (logChannel != null)
+            if (logChannel != null && logChannel.Id != channel.Id)
             {
                 if (msg.HasValue)
                 {
                     var m = msg.Value;
                     var embed = new EmbedBuilder();
-                    embed.WithTitle($"Message Deleted by {m.Author.Mention} in <#{m.Channel.Id}>");
+                    embed.WithDescription($"**Message Deleted by <@{m.Author.Id}> in <#{m.Channel.Id}>**\n{m.Content}");
                     embed.WithAuthor(m.Author);
-                    embed.WithDescription(m.Content);
                     embed.WithColor(Color.Red);
                     embed.WithFooter($"A: {m.Author.Id} M: {m.Id}");
                     await logChannel.SendMessageAsync(embed: embed.Build());
@@ -374,16 +373,15 @@ public class Sentinel
                     if (m == null)
                     {
                         var embed = new EmbedBuilder();
-                        embed.WithTitle($"Unknown message removed in <#{channel.Id}>");
+                        embed.WithDescription($"**Unknown message removed in <#{channel.Id}>**");
                         embed.WithColor(Color.Red);
                         embed.WithFooter($"M: {msg.Id}");
-                        await logChannel.SendMessageAsync("Unknown message deleted");
+                        await logChannel.SendMessageAsync(embed: embed.Build());
                     }
                     else
                     {
                         var embed = new EmbedBuilder();
-                        embed.WithTitle($"Message Deleted by <@{m.AuthorId}> in <#{m.ChannelId}>");
-                        embed.WithDescription(m.Content);
+                        embed.WithDescription($"**Message Deleted by <@{m.AuthorId}> in <#{m.ChannelId}>**\n{m.Content}");
                         embed.WithColor(Color.Red);
                         embed.WithFooter($"A: {m.AuthorId} M: {m.MessageId}");
                         await logChannel.SendMessageAsync(embed: embed.Build());
@@ -461,13 +459,36 @@ public class Sentinel
         //await _newMessageHandler.AntiChristmas(msg);
         using (var data = GetDb())
         {
-            Task msgMgr = _messageManager.MessageAlter(msg);
-            if(msg.Author.IsBot) return;
             if(!(msg.Channel is SocketGuildChannel)) return;
             SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
-            ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
             ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
+            
+            if(srv.LogChannel != null && channel.Id != srv.LogChannel.Value)
+            {
+                var logChannel = channel.Guild.GetTextChannel(srv.LogChannel.Value);
+                string before = "`unknown`";
+                if (arg1.HasValue) before = arg1.Value.Content;
+                else
+                {
+                    var dbm = await _messageManager.GetMessage(arg1.Id);
+                    if (dbm != null) before = dbm.Content;
+                }
+                
+                var embed = new EmbedBuilder();
+                embed.WithDescription($"**Message Edited by <@{msg.Author.Id}> in <#{msg.Channel.Id}>**");
+                embed.WithAuthor(msg.Author);
+                embed.WithColor(255,255,0);
 
+                embed.AddField("Before", before);
+                embed.AddField("After", msg.Content);
+                
+                embed.WithFooter($"A: {msg.Author.Id} M: {msg.Id}");
+                await logChannel.SendMessageAsync(msg.GetJumpUrl(),embed: embed.Build());
+            }
+
+            await _messageManager.MessageAlter(msg);
+            if(msg.Author.IsBot) return;
+            ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
             if (user.Censored && srv.FunnyCommands)
             {
                 if (CensorCheck(msg, srv))
@@ -478,9 +499,6 @@ public class Sentinel
         
             //Apply Frenchification
             await NewMessageHandler.Francais(msg, user,srv,_textcat);
-            
-            //Await pending tasks
-            await msgMgr;
         }
         
     }

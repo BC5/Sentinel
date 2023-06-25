@@ -40,6 +40,7 @@ public class UtilityCommands : InteractionModuleBase
         await RespondAsync("Done", ephemeral: true);
     }
     
+    [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator)]
     [SlashCommand("logchannel","Channel where logs go")]
     public async Task LogChannel([ChannelTypes(ChannelType.Text)] IGuildChannel channel)
     {
