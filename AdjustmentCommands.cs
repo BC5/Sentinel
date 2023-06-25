@@ -383,13 +383,14 @@ public class AdjustmentCommands : InteractionModuleBase
         if (ar != null)
         {
             srv.AutoResponses.Remove(ar);
-            await RespondAsync($"Removed Response with Trigger {ar.Trigger}");
             await _data.SaveChangesAsync();
+            await RespondAsync($"Removed Response with Trigger {ar.Trigger}");
         }
         else
         {
             await RespondAsync("Error: Couldn't find that response. Maybe it's already deleted?");
         }
+        await _data.SaveChangesAsync();
     }
 
     private static string Truncate(string? str, int max)

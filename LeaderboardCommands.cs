@@ -94,5 +94,27 @@ public class LeaderboardCommands : InteractionModuleBase
 
         await RespondAsync(embed: eb.Build(), ephemeral: true);
     }
+
+    [SlashCommand(name: "react", description: "Highest amount of a given reaction")]
+    public async Task Reacts(string react, int count = 10, bool bottom = false, bool given = false)
+    {
+        List<(ulong id, int count)> top10;
+        if (given) top10 = _data.GetTopReactGiven(Context.Guild.Id,react,count,bottom);
+        else top10 = _data.GetTopReactReceived(Context.Guild.Id,react,count,bottom);
+        EmbedBuilder eb = new();
+        if(given) eb.WithTitle(bottom ? $"Bottom Users by {react} reacts given" : $"Top Users by {react} reacts given");
+        else eb.WithTitle(bottom ? $"Bottom Users by {react} reacts received" : $"Top Users by {react} reacts received");
+        eb.WithColor(0xFFF700);
+        int i = 1;
+        string leaderboard = "";
+        foreach (var user in top10)
+        {
+            leaderboard = leaderboard + $"**{i}** - <@{user.id}> - {user.count:n0}\n";
+            i++;
+        }
+        eb.WithDescription(leaderboard);
+
+        await RespondAsync(embed: eb.Build(), ephemeral: true);
+    }
     
 }

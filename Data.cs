@@ -108,6 +108,62 @@ public class Data : DbContext
         }
     }
     
+    public List<(ulong id, int count)> GetTopReactReceived(ulong server, string react, int quantity = 10, bool bottom = false)
+    {
+        if (bottom)
+        {
+            var x = ReactLog.Where(x => x.ServerId == server && x.ReactName == react)
+                .GroupBy(x => x.ReacteeId).Select(x => new {id = x.Key, count = x.Count()})
+                .OrderBy(x => x.count).Take(quantity).ToList();
+            List<(ulong id, int count)> y = new();
+            foreach (var i in x)
+            {
+                y.Add((i.id,i.count));
+            }
+            return y;
+        }
+        else
+        {
+            var x = ReactLog.Where(x => x.ServerId == server && x.ReactName == react)
+                .GroupBy(x => x.ReacteeId).Select(x => new {id = x.Key, count = x.Count()})
+                .OrderByDescending(x => x.count).Take(quantity).ToList();
+            List<(ulong id, int count)> y = new();
+            foreach (var i in x)
+            {
+                y.Add((i.id,i.count));
+            }
+            return y;
+        }
+    }
+    
+    public List<(ulong id, int count)> GetTopReactGiven(ulong server, string react, int quantity = 10, bool bottom = false)
+    {
+        if (bottom)
+        {
+            var x = ReactLog.Where(x => x.ServerId == server && x.ReactName == react)
+                .GroupBy(x => x.ReactorId).Select(x => new {id = x.Key, count = x.Count()})
+                .OrderBy(x => x.count).Take(quantity).ToList();
+            List<(ulong id, int count)> y = new();
+            foreach (var i in x)
+            {
+                y.Add((i.id,i.count));
+            }
+            return y;
+        }
+        else
+        {
+            var x = ReactLog.Where(x => x.ServerId == server && x.ReactName == react)
+                .GroupBy(x => x.ReactorId).Select(x => new {id = x.Key, count = x.Count()})
+                .OrderByDescending(x => x.count).Take(quantity).ToList();
+            List<(ulong id, int count)> y = new();
+            foreach (var i in x)
+            {
+                y.Add((i.id,i.count));
+            }
+            return y;
+        }
+    }
+
     public async Task<Transaction.TxnStatus> Transact(ulong? sender, ulong? recipient, ulong server, int amount, Transaction.TxnType type = Transaction.TxnType.Transfer, bool allowDebt = false, bool allowSeizure = false)
     {
         ServerUser? rx = null, tx = null;
