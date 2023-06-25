@@ -329,6 +329,29 @@ public class Sentinel
         _discord.ModalSubmitted += Modal;
         _discord.MessageDeleted += Deleted;
         _discord.MessagesBulkDeleted += BulkDeleted;
+        _discord.UserLeft += MemberLeft;
+    }
+
+    private async Task MemberLeft(SocketGuild guild, SocketUser user)
+    {
+        using (var data = GetDb())
+        {
+            var srv = await data.GetServerConfig(guild.Id);
+            if (srv.LogChannel != null)
+            {
+                var lc = guild.GetTextChannel(srv.LogChannel.Value);
+                if (lc != null)
+                {
+                    var eb = new EmbedBuilder();
+                    eb.WithAuthor("Member Left", user.GetAvatarUrl());
+                    eb.WithThumbnailUrl(user.GetAvatarUrl());
+                    eb.WithColor(Color.DarkRed);
+                    eb.WithDescription($"{user.Mention} - {user.Username}");
+                    eb.WithFooter($"ID: {user.Id}");
+                    await lc.SendMessageAsync(embed: eb.Build());
+                }
+            }
+        }
     }
 
     private async Task BulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> msgs, Cacheable<IMessageChannel, ulong> channel)
@@ -440,11 +463,28 @@ public class Sentinel
         }
     }
 
-    private async Task NewMember(SocketGuildUser arg)
+    private async Task NewMember(SocketGuildUser usr)
     {
         using (var data = GetDb())
         {
-            await OnboardingModule.UserJoin(data,arg);
+            await OnboardingModule.UserJoin(data,usr);
+            
+            var srv = await data.GetServerConfig(usr.Guild.Id);
+            if (srv.LogChannel != null)
+            {
+                var lc = usr.Guild.GetTextChannel(srv.LogChannel.Value);
+                if (lc != null)
+                {
+                    var eb = new EmbedBuilder();
+                    eb.WithAuthor("Member Joined", usr.GetAvatarUrl());
+                    eb.WithThumbnailUrl(usr.GetAvatarUrl());
+                    eb.WithDescription($"{usr.Mention} - {usr.Username}");
+                    eb.WithFooter($"ID: {usr.Id}");
+                    eb.WithColor(Color.DarkGreen);
+                    await lc.SendMessageAsync(embed: eb.Build());
+                }
+            }
+            
             await data.SaveChangesAsync();
         }
     }
@@ -473,17 +513,20 @@ public class Sentinel
                     var dbm = await _messageManager.GetMessage(arg1.Id);
                     if (dbm != null) before = dbm.Content;
                 }
-                
-                var embed = new EmbedBuilder();
-                embed.WithDescription($"**Message Edited by <@{msg.Author.Id}> in <#{msg.Channel.Id}>**");
-                embed.WithAuthor(msg.Author);
-                embed.WithColor(255,255,0);
 
-                embed.AddField("Before", before);
-                embed.AddField("After", msg.Content);
-                
-                embed.WithFooter($"A: {msg.Author.Id} M: {msg.Id}");
-                await logChannel.SendMessageAsync(msg.GetJumpUrl(),embed: embed.Build());
+                if (before != msg.Content)
+                {
+                    var embed = new EmbedBuilder();
+                    embed.WithDescription($"**Message Edited by <@{msg.Author.Id}> in <#{msg.Channel.Id}>**");
+                    embed.WithAuthor(msg.Author);
+                    embed.WithColor(255, 255, 0);
+
+                    embed.AddField("Before", before);
+                    embed.AddField("After", msg.Content);
+
+                    embed.WithFooter($"A: {msg.Author.Id} M: {msg.Id}");
+                    await logChannel.SendMessageAsync(msg.GetJumpUrl(), embed: embed.Build());
+                }
             }
 
             await _messageManager.MessageAlter(msg);
