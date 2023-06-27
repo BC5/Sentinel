@@ -11,54 +11,56 @@ using Sentinel;
 namespace Sentinel.Migrations
 {
     [DbContext(typeof(Data))]
-    [Migration("20230611220804_AddPurgeConfig")]
-    partial class AddPurgeConfig
+    [Migration("20230626003626_FixSentenceTimespan")]
+    partial class FixSentenceTimespan
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.0-preview.4.23259.3");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "7.0.8")
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("Sentinel.AutoResponse", b =>
                 {
                     b.Property<int>("ResponseId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("Chance")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("LastTrigger")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("RateLimit")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<TimeSpan?>("ReloadTime")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("time(6)");
 
                     b.Property<string>("ResponseEmote")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ResponseText")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong?>("ServerConfigDiscordID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("TargetChannel")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("TargetUser")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Trigger")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("Wildcard")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("ResponseId");
 
@@ -71,20 +73,20 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Phrase")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("Requirement")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<ulong?>("ServerConfigDiscordID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<bool>("Wildcard")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
@@ -97,17 +99,17 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("BallotId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("Ballot")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong>("ElectionId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("VoterId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("BallotId");
 
@@ -118,28 +120,28 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("Channel")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<byte[]>("ImageHash")
                         .IsRequired()
-                        .HasColumnType("BLOB");
+                        .HasColumnType("longblob");
 
                     b.Property<string>("ImageURL")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong>("Message")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("Server")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -150,16 +152,16 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("ConfigurationID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("ChannelID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<DateTimeOffset>("LastPurge")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<ulong?>("ServerConfigDiscordID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("ConfigurationID");
 
@@ -172,17 +174,17 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong?>("ServerConfigDiscordID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("ServerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -191,27 +193,53 @@ namespace Sentinel.Migrations
                     b.ToTable("QuoteEntry");
                 });
 
+            modelBuilder.Entity("Sentinel.ReactBoardConfig", b =>
+                {
+                    b.Property<int>("ReactConfigId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<ulong>("ChannelId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("Reaction")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<ulong?>("ServerConfigDiscordID")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<uint>("Threshold")
+                        .HasColumnType("int unsigned");
+
+                    b.HasKey("ReactConfigId");
+
+                    b.HasIndex("ServerConfigDiscordID");
+
+                    b.ToTable("ReactBoardConfig");
+                });
+
             modelBuilder.Entity("Sentinel.Reaction", b =>
                 {
                     b.Property<int>("ReactionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("MessageId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("ReactName")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong>("ReacteeId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("ReactorId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("ServerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("ReactionId");
 
@@ -222,61 +250,85 @@ namespace Sentinel.Migrations
                 {
                     b.Property<ulong>("DiscordID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<string>("ApprovalMessage")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ArrivalMessage")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<ulong?>("ArrivalsChannel")
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("Cost1984")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("CostDe1984")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("CostWarn")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<TimeSpan>("DefaultSentence")
-                        .HasColumnType("TEXT");
+                    b.Property<string>("DefaultRoles")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("DefaultSentence")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("DeflectorCost")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("FactcheckCost")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong?>("FlagChannel")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("FrenchChannel")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("FrenchCost")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("FunnyCommands")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<ulong?>("GeneralChannel")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong?>("IdiotChannel")
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("IdiotRole")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong?>("LogChannel")
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong?>("ModRole")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<int>("MuteCost")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("NickCost")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<float>("RewardChance")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int>("RewardSize")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("SlotsFee")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("SlotsPayout")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("DiscordID");
 
@@ -286,60 +338,63 @@ namespace Sentinel.Migrations
             modelBuilder.Entity("Sentinel.ServerUser", b =>
                 {
                     b.Property<string>("CompositeID")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool>("Authoritative")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Balance")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("Censored")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime?>("DeflectorExpiry")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Earnings")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<bool>("Francophone")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime?>("IdiotedUntil")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<bool>("Immune")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("Juvecheck")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<float>("Multiplier")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("Nicklock")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime?>("NicklockUntil")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("PrevNick")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("RoleBackup")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SentinelAttitude")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong>("ServerSnowflake")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<long>("SocialCredit")
+                        .HasColumnType("bigint");
 
                     b.Property<ulong>("UserSnowflake")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<bool>("Verified")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("CompositeID");
 
@@ -350,49 +405,73 @@ namespace Sentinel.Migrations
                 {
                     b.Property<uint>("warnid")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int unsigned");
 
                     b.Property<ulong>("serverid")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<string>("warnReason")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("warnTime")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("datetime(6)");
 
                     b.Property<ulong>("warned")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("warner")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("warnid");
 
                     b.ToTable("Warns");
                 });
 
+            modelBuilder.Entity("Sentinel.SocialCreditEntry", b =>
+                {
+                    b.Property<int>("EntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<long>("Points")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<ulong>("ServerId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.HasKey("EntryId");
+
+                    b.ToTable("SocialCreditLog");
+                });
+
             modelBuilder.Entity("Sentinel.Transaction", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("Amount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("Reason")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("RecipientID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("SenderID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("ServerID")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("Id");
 
@@ -403,13 +482,13 @@ namespace Sentinel.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<ulong>("Poll")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.Property<ulong>("User")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint unsigned");
 
                     b.HasKey("Id");
 
@@ -444,6 +523,13 @@ namespace Sentinel.Migrations
                         .HasForeignKey("ServerConfigDiscordID");
                 });
 
+            modelBuilder.Entity("Sentinel.ReactBoardConfig", b =>
+                {
+                    b.HasOne("Sentinel.ServerConfig", null)
+                        .WithMany("ReactBoards")
+                        .HasForeignKey("ServerConfigDiscordID");
+                });
+
             modelBuilder.Entity("Sentinel.ServerConfig", b =>
                 {
                     b.Navigation("AutoResponses");
@@ -453,6 +539,8 @@ namespace Sentinel.Migrations
                     b.Navigation("PurgeConfig");
 
                     b.Navigation("Quotes");
+
+                    b.Navigation("ReactBoards");
                 });
 #pragma warning restore 612, 618
         }

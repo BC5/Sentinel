@@ -22,7 +22,9 @@ public class Data : DbContext
     public DbSet<ElectionBallot> Ballots { get; set; }
     public DbSet<SocialCreditEntry> SocialCreditLog { get; set; }
 
-    [NotMapped] public string DbPath { get; } = "";
+    [NotMapped] public string SQLitePath { get; } = "";
+    [NotMapped] private ServerVersion? _sqlVersion = null;
+    [NotMapped] public Config.SQLServer? SQL { get; } = null;
     
     public Data()
     {
@@ -36,7 +38,13 @@ public class Data : DbContext
     
     public Data(string file)
     {
-        DbPath = file;
+        SQLitePath = file;
+    }
+    
+    public Data(Config.SQLServer sql, ServerVersion sqlv)
+    {
+        SQL = sql;
+        _sqlVersion = sqlv;
     }
 
 /*
@@ -228,15 +236,26 @@ public class Data : DbContext
     
     protected override void OnConfiguring(DbContextOptionsBuilder opt)
     {
-        if (DbPath != null && DbPath != "")
+        if (SQLitePath != null && SQLitePath != "")
         {
-            opt.UseSqlite($"Data Source={DbPath}");
+            opt.UseSqlite($"Data Source={SQLitePath}");
+        }
+        else if(SQL != null)
+        {
+            if (_sqlVersion == null) _sqlVersion = ServerVersion.AutoDetect(SQL.GetConnectionString());
+            opt.UseMySql(SQL.GetConnectionString(), _sqlVersion);
+        }
+        else if(!opt.IsConfigured)
+        {
+            string connstring = "server=localhost;user=sentinel;password=1984;database=sentinel";
+            var v = ServerVersion.AutoDetect(connstring);
+            opt.UseMySql(connstring, v);
         }
     }
 
     public async Task<ServerUser?> GetServerUserNoCreate(ulong user, ulong server)
     {
-        var results = await Users.Where(x => x.UserSnowflake == user && x.ServerSnowflake == server).ToListAsync();
+        var results = await Users.Where(x => x.CompositeID == $"{server}:{user}").ToListAsync();
         if (results.Count == 0) return null;
         return results[0];
     }
@@ -248,7 +267,7 @@ public class Data : DbContext
     
     public async Task<ServerUser> GetServerUser(ulong user, ulong server)
     {
-        var results = await Users.Where(x => x.UserSnowflake == user && x.ServerSnowflake == server).ToListAsync();
+        var results = await Users.Where(x => x.CompositeID == $"{server}:{user}").ToListAsync();
         if (results.Count == 0)
         {
             try
@@ -275,6 +294,7 @@ public class Data : DbContext
             .Include(y => y.Quotes)
             .Include(y => y.PurgeConfig)
             .Include(y => y.ReactBoards)
+            .AsSplitQuery()
             .ToListAsync();
         if (results.Count == 0)
         {
@@ -292,6 +312,7 @@ public class Data : DbContext
             .Include(y => y.Quotes)
             .Include(y => y.PurgeConfig)
             .Include(y => y.ReactBoards)
+            .AsSplitQuery()
             .ToListAsync();
         if (results.Count != 0)
         {
@@ -454,6 +475,7 @@ public class ServerConfig
     public List<QuoteEntry> Quotes { get; set; } = new List<QuoteEntry>();
     public List<PurgeConfiguration> PurgeConfig { get; set; } = new List<PurgeConfiguration>();
     public ulong? IdiotRole { get; set; }
+    [Column(TypeName = "bigint")]
     public TimeSpan DefaultSentence { get; set; } = TimeSpan.FromDays(90);
     public ulong? FrenchChannel { get; set; }
     public int SlotsPayout { get; set; } = 100;

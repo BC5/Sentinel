@@ -7,7 +7,6 @@ namespace Sentinel;
 public class SentinelEvents
 {
     private Sentinel _bot;
-
     public SentinelEvents(Sentinel bot)
     {
         _bot = bot;
@@ -25,7 +24,7 @@ public class SentinelEvents
         Func<MessageRemoveContext, Task> handler = RemoveMessage;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
             MessageRemoveContext ctx = await MessageRemoveContext.Create(msg, channel, db);
             try
             {
@@ -43,7 +42,7 @@ public class SentinelEvents
         Func<MessageContext, Task> handler = NewMessage;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
             MessageContext ctx = await MessageContext.Create(msg,db);
             try
             {
@@ -70,7 +69,7 @@ public class SentinelEvents
         Func<ReactContext, Task> handler = NewReact;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
             ReactContext ctx = await ReactContext.Create(react,await msg.GetOrDownloadAsync(),db,false);
             try
             {
@@ -89,7 +88,7 @@ public class SentinelEvents
         Func<ReactContext, Task> handler = RemoveReact;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
             ReactContext ctx = await ReactContext.Create(react,await msg.GetOrDownloadAsync(),db,true);
             try
             {
@@ -108,7 +107,7 @@ public class SentinelEvents
         Func<MessageEditContext, Task> handler = AlterMessage;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
             MessageEditContext ctx = await MessageEditContext.Create(msgnew,msgold,db);
             try
             {
@@ -127,7 +126,7 @@ public class SentinelEvents
         Func<MessageRemoveContext, Task> handler = RemoveMessage;
         if (handler != null)
         {
-            Data db = new Data($@"{_bot.GetConfig().DataDirectory}/data.sqlite");
+            using Data db = _bot.GetDb();
 
             foreach (var msg in msgs)
             {

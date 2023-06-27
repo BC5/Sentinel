@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using Sentinel.Logging;
 using SQLitePCL;
 
@@ -42,11 +43,15 @@ public class MessageManagement
     
     public async Task MessageLog(IMessage msg)
     {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
         using (var log = GetLogDbContext())
         {
             await log.AddMessage(msg);
             await log.SaveChangesAsync();
         }
+        sw.Stop();
+        Console.WriteLine($"Log writing took {sw.ElapsedMilliseconds:n0}ms");
     }
 
     public async Task MessageRemove(Cacheable<IMessage, ulong> msg, bool removed = false)

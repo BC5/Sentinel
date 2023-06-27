@@ -47,7 +47,8 @@ public class Sentinel
     private MessageManagement _messageManager;
 
     private ulong _ticks = 0;
-
+    private ServerVersion? _dbV;
+    
     private List<ISentinelModule> _modules;
     public SentinelEvents Events { get; set; }
     private string _configfile = "";
@@ -105,7 +106,7 @@ public class Sentinel
     
     public Data GetDb()
     {
-        return new Data($@"{_config.DataDirectory}/data.sqlite");;
+        return new Data(_config.Database, _dbV);;
     }
 
     public static async Task WriteConfig(Config conf, string file)
@@ -130,12 +131,13 @@ public class Sentinel
         _textcat = new(@$"{conf.DataDirectory}/ntextcat/languagemodel.xml");
         try
         {
-            var tempdata = new Data($@"{conf.DataDirectory}/data.sqlite");
+            _dbV = ServerVersion.AutoDetect(_config.Database.GetConnectionString());
+            using var tempdata = new Data(_config.Database, _dbV);
             tempdata.Database.EnsureCreated();
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _log.Log(LogType.Error,"Database",$"Exception on EnsureCreated: {e}");
             throw;
         }
         _random = new Random();
@@ -192,7 +194,7 @@ public class Sentinel
         await _discord.StartAsync();
         
         //create New Message handler
-        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random, _textcat, _messageManager);
+        _newMessageHandler = new(_discord, this, _ocr, _regexes, _detention, _config, _random, _textcat, _messageManager, _log);
         
         //Hook remaining events
         HookEvents();
@@ -268,9 +270,7 @@ public class Sentinel
         srv.AddSingleton(_log);
         
         //add dbcontext to dependency inj.
-        string DbPath = $@"{_config.DataDirectory}/data.sqlite";
-        srv.AddDbContext<Data>(o => o.UseSqlite($"Data Source={DbPath}"));
-        
+        srv.AddDbContext<Data>(o => o.UseMySql(_config.Database.GetConnectionString(), _dbV));
         _services = srv.BuildServiceProvider();
         
         //add commands

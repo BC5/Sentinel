@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 
 namespace Sentinel;
 
@@ -334,8 +335,19 @@ public class EconomyCommands : InteractionModuleBase
         try
         {
             await Context.Interaction.DeferAsync(ephemeral: true);
-            ServerUser prof = await _data.GetServerUser(target.Id,Context.Guild.Id);
-            await Context.Interaction.FollowupAsync($"{target.Mention}'s Balance: £{prof.Balance:n0}");
+            
+            try
+            {
+                ServerUser prof = await _data.GetServerUser(target.Id,Context.Guild.Id);
+                await Context.Interaction.FollowupAsync($"{target.Mention}'s Balance: £{prof.Balance:n0}");
+            }
+            catch (MySqlException e)
+            {
+                Console.WriteLine(_data.SQL?.GetConnectionString());
+                Console.WriteLine(_data.Database.ProviderName);
+                Console.WriteLine(e);
+                throw;
+            }
         }
         catch (Exception e)
         {

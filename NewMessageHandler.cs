@@ -1,8 +1,10 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.WebSocket;
 using Sentinel.Archivist;
+using Sentinel.Logging;
 
 namespace Sentinel;
 
@@ -17,9 +19,10 @@ public class NewMessageHandler
     private Random _random;
     private TextCat _textcat;
     private MessageManagement _msgMgr;
+    private SentinelLogging _log;
 
     public NewMessageHandler(DiscordSocketClient discord, Sentinel core, OCRManager ocr, Sentinel.Regexes regex,
-        Detention detention, Config conf, Random rand, TextCat textcat, MessageManagement msgMgr)
+        Detention detention, Config conf, Random rand, TextCat textcat, MessageManagement msgMgr, SentinelLogging log)
     {
         _discord = discord;
         _core = core;
@@ -30,6 +33,7 @@ public class NewMessageHandler
         _random = rand;
         _textcat = textcat;
         _msgMgr = msgMgr;
+        _log = log;
     }
     
     public async Task NewMessage(SocketMessage msg)
@@ -44,7 +48,6 @@ public class NewMessageHandler
             SocketGuildChannel channel = (SocketGuildChannel) msg.Channel;
             ServerUser user = await data.GetServerUser(msg.Author.Id, channel.Guild.Id);
             ServerConfig srv = await data.GetServerConfig(channel.Guild.Id);
-
             SocketGuildUser? sgu = null;
             if (msg.Author is SocketGuildUser sgutemp) sgu = sgutemp;
 
@@ -53,19 +56,19 @@ public class NewMessageHandler
 
             //New Idiot & Add x Days check
             bool suppressquote = await NewIdiot(sgu, msg, srv, channel, data);
-
+            
             //Trigger random reply when pinged
             if (!suppressquote && sgu != null) await RandomQuote(msg, sgu, user, srv, data);
-
+            
             //Do autoresponses
             await AutoResponses(msg, srv);
-
+            
             //Social Credit Actions
             await SocialCreditActions(msg, SocialCreditCommands.GetClass(user.SocialCredit));
 
             //Check for "JUVE"
             if (user.Juvecheck) await JuveCheck(msg);
-
+            
             //AntiChristmas
             //await AntiChristmas(msg);
 

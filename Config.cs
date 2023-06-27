@@ -25,6 +25,9 @@ public class Config
     public List<AutoResponse> AutoResponses { get; set; } = new();
     public List<ProcedureScheduler.ScheduledProcedure> ProcedureSchedule { get; set; } = new();
 
+    public SQLServer Database { get; set; } = new();
+    
+
     public List<SlotsEmote> SlotsEmotes { get; set; } = new List<SlotsEmote>() {
         new SlotsEmote("7️⃣",10),new SlotsEmote("🍋",1),
         new SlotsEmote("🍓",10),new SlotsEmote("🔔",1),
@@ -46,6 +49,19 @@ public class Config
         
         public int value { get; set; } = 0;
         public string emote { get; set; } = "🤑";
+    }
+
+    public class SQLServer
+    {
+        public string Server { get; set; } = "localhost";
+        public string User { get; set; } = "sentinel";
+        public string Password { get; set; } = "1984";
+        public string Schema { get; set; } = "sentinel";
+
+        public string GetConnectionString()
+        {
+            return $"server={Server};user={User};password={Password};database={Schema}";
+        }
     }
     
 
