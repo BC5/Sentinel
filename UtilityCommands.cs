@@ -59,6 +59,35 @@ public class UtilityCommands : InteractionModuleBase
             await RespondAsync($"Log Channel is now <#{channel.Id}>");
         }
     }
+
+    [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator)]
+    [SlashCommand("impersonate","Identity theft")]
+    public async Task Impersonate(string message, IUser user, string nick = "")
+    {
+        if (Context.Channel is ITextChannel itc)
+        {
+            IWebhook? wh = null;
+            var whs = await itc.GetWebhooksAsync();
+            foreach(var w in whs)
+            {
+                if (w.Creator.Id == Context.Client.CurrentUser.Id)
+                {
+                    wh = w;
+                    break;
+                }
+            }
+            if (wh == null) wh = await itc.CreateWebhookAsync("Sentinel");
+            if (nick == "")
+            {
+                if (user is IGuildUser igu) nick = igu.DisplayName;
+                else nick = user.Username;
+            }
+            var whc = new DiscordWebhookClient(wh);
+            await whc.SendMessageAsync(message, username: nick, avatarUrl: user.GetAvatarUrl());
+            whc.Dispose();
+            await RespondAsync("Done", ephemeral: true);
+        }
+    }
     
     [Discord.Interactions.RequireUserPermission(GuildPermission.Administrator)]
     [SlashCommand("reactboard","Setup a react board")]
@@ -286,56 +315,64 @@ public class UtilityCommands : InteractionModuleBase
     [MessageCommand("FactCheck")]
     public async Task FactCheck(IMessage msg)
     {
-        var srvtsk = _data.GetServerConfig(Context.Guild.Id);
-        var usrtsk = _data.GetServerUser((SocketGuildUser) Context.User);
-        var md5 = MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(msg.Content.ToLower()));
-        int seed = BitConverter.ToInt32(hash);
-        var srv = await srvtsk;
-        var usr = await usrtsk;
-
-        if (usr.Balance < srv.FactcheckCost)
+        try
         {
-            await RespondAsync($"Brokie. Can't even afford a factcheck lmao (£{srv.FactcheckCost:n0})");
-            return;
-        }
+            await DeferAsync(ephemeral: true);
+            var srvtsk = _data.GetServerConfig(Context.Guild.Id);
+            var md5 = MD5.Create();
+            var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(msg.Content.ToLower()));
+            int seed = BitConverter.ToInt32(hash);
+            var srv = await srvtsk;
+            var usr = await _data.GetServerUser((SocketGuildUser) Context.User);;
 
-        var txn = await _data.Transact(usr, null, srv.FactcheckCost, Transaction.TxnType.Purchase);
-
-        if (msg is IUserMessage msg2 && txn == Transaction.TxnStatus.Success)
-        {
-            await RespondAsync("✅",ephemeral:true);
-
-            if (msg.Channel.Id == srv.FrenchChannel)
+            if (usr.Balance < srv.FactcheckCost)
             {
-                await msg2.ReplyAsync("**VÉRIFIÉ PAR DE VRAIS PATRIOTES FRANÇAIS:** JE ME RENDS");
+                await FollowupAsync($"Brokie. Can't even afford a factcheck lmao (£{srv.FactcheckCost:n0})");
                 return;
             }
-            
-            Config cfg = _core.GetConfig();
-            Config.FactCheck fc = cfg.GetFactcheck(seed);
-            
-            //If it's me just keep rerolling until you get true
-            if (msg.Author.Id == 241325827810131978)
+
+            var txn = await _data.Transact(usr, null, srv.FactcheckCost, Transaction.TxnType.Purchase);
+
+            if (msg is IUserMessage msg2 && txn == Transaction.TxnStatus.Success)
             {
-                while (fc.Type != Config.FactCheck.CheckType.TRUE)
+                await FollowupAsync("✅",ephemeral:true);
+
+                if (msg.Channel.Id == srv.FrenchChannel)
                 {
-                    fc = cfg.GetFactcheck();
+                    await msg2.ReplyAsync("**VÉRIFIÉ PAR DE VRAIS PATRIOTES FRANÇAIS:** JE ME RENDS");
+                    return;
                 }
+            
+                Config cfg = _core.GetConfig();
+                Config.FactCheck fc = cfg.GetFactcheck(seed);
+            
+                //If it's me just keep rerolling until you get true
+                if (msg.Author.Id == 241325827810131978)
+                {
+                    while (fc.Type != Config.FactCheck.CheckType.TRUE)
+                    {
+                        fc = cfg.GetFactcheck();
+                    }
+                }
+
+                string text = fc.Text;
+            
+                if (text.Contains("<TRIGGERUSER>"))
+                {
+                    text = text.Replace("<TRIGGERUSER>", Context.User.Mention);
+                }
+            
+                await msg2.ReplyAsync(text);
+                return;
             }
 
-            string text = fc.Text;
-            
-            if (text.Contains("<TRIGGERUSER>"))
-            {
-                text = text.Replace("<TRIGGERUSER>", Context.User.Mention);
-            }
-            
-            await msg2.ReplyAsync(text);
-            return;
+            await FollowupAsync("Something went wrong.", ephemeral: true);
         }
-
-        await RespondAsync("Something went wrong.", ephemeral: true);
+        catch (Exception e)
+        {
+            await _log.Error("/factcheck", e.ToString());
+            throw;
+        }
     }
 
     /*
