@@ -71,14 +71,19 @@ public class ModerationCommands : InteractionModuleBase
         if(t6 != null) mutes.Add(t6);
 
         string pings = "";
+
+        int i = 0;
         foreach (var m in mutes)
         {
+            if(m.GuildPermissions.ModerateMembers) continue;
+            i++;
             pings = pings + m.Mention + " ";
+            await _data.AddModlog(Context.User, m, ModLog.ModAction.Mute, $"{mins:n0}m {reason}");
             await m.SetTimeOutAsync(TimeSpan.FromMinutes(mins), new RequestOptions() {AuditLogReason = $"Multimute by {Context.User.Username}"});
         }
 
         var eb = new EmbedBuilder();
-        eb.WithTitle($"Muted {mutes.Count} users for {mins} minutes");
+        eb.WithTitle($"Muted {i} users for {mins} minutes");
         eb.WithDescription($"**Reason:** {reason}");
         eb.WithColor(255,0,0);
         await FollowupAsync(pings, embed: eb.Build());
@@ -113,7 +118,7 @@ public class ModerationCommands : InteractionModuleBase
 
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("idiot","Brand a user with the idiot role")]
-    public async Task Idiot(IGuildUser user, float duration, bool hours = false)
+    public async Task Idiot(IGuildUser user, float duration, bool hours = false, string? reason = null)
     {
         await DeferAsync();
         try
@@ -133,6 +138,7 @@ public class ModerationCommands : InteractionModuleBase
             await _data.SaveChangesAsync();
             if (durationts > TimeSpan.Zero)
             {
+                await _data.AddModlog(Context.User, user, ModLog.ModAction.Detain, $"{durationts:%d}d {reason}");
                 if (durationts > TimeSpan.FromHours(23))
                 {
                     await FollowupAsync($"{user.Mention} <@&{scfg.IdiotRole.Value}> ({durationts:%d} days)");
@@ -183,7 +189,7 @@ public class ModerationCommands : InteractionModuleBase
     
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("unidiot","Release a user from idiotdom")]
-    public async Task UnIdiot(IGuildUser user)
+    public async Task UnIdiot(IGuildUser user, string? reason = null)
     {
         try
         {
@@ -201,7 +207,8 @@ public class ModerationCommands : InteractionModuleBase
                 await RespondAsync("I didn't idiot them lol",ephemeral:true);
                 return;
             }
-            
+
+            await _data.AddModlog(Context.User, user, ModLog.ModAction.Release, reason);
             await _detention.Unidiot(user, su, scfg.IdiotRole.Value);
             await _data.SaveChangesAsync();
             await RespondAsync($"{user.Mention} no longer an <@&{scfg.IdiotRole.Value}>!");
@@ -290,6 +297,201 @@ public class ModerationCommands : InteractionModuleBase
             await FollowupAsync(e.Message);
             throw;
         }
+    }
+
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("ban","Ban a user from this server")]
+    public async Task Ban(IGuildUser target, string? reason = null)
+    {
+        await DeferAsync();
+        if (target.GuildPermissions.ModerateMembers)
+        {
+            await FollowupAsync("Can't ban moderators");
+            return;
+        }
+
+        await _data.AddModlog(Context.User, target, ModLog.ModAction.Ban, reason);
+        await _data.SaveChangesAsync();
+        
+        var dms = await target.CreateDMChannelAsync();
+        if (dms != null)
+        {
+            var eb = new EmbedBuilder();
+            eb.WithTitle($"You have been banned from {target.Guild.Name}");
+            if (reason != null) eb.WithDescription(reason);
+            eb.WithColor(255,0,0);
+            await dms.SendMessageAsync(embed: eb.Build());
+        }
+        await target.BanAsync();
+        
+        var eb2 = new EmbedBuilder();
+        eb2.WithDescription(reason != null
+            ? $"**{target.Username} banned** | {reason}"
+            : $"**{target.Username} banned**");
+        eb2.WithFooter($"{target.Id}");
+        eb2.WithColor(255, 0, 0);
+
+        await FollowupAsync(embed: eb2.Build());
+    }
+    
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("kick","Kick a user from this server")]
+    public async Task Kick(IGuildUser target, string? reason = null)
+    {
+        await DeferAsync();
+        if (target.GuildPermissions.ModerateMembers)
+        {
+            await FollowupAsync("Can't kick moderators");
+            return;
+        }
+
+        await _data.AddModlog(Context.User, target, ModLog.ModAction.Kick, reason);
+        await _data.SaveChangesAsync();
+        
+        var dms = await target.CreateDMChannelAsync();
+        if (dms != null)
+        {
+            var eb = new EmbedBuilder();
+            eb.WithTitle($"You have been kicked from {target.Guild.Name}");
+            if (reason != null) eb.WithDescription(reason);
+            eb.WithColor(255,0,0);
+            await dms.SendMessageAsync(embed: eb.Build());
+        }
+        await target.KickAsync();
+        
+        var eb2 = new EmbedBuilder();
+        eb2.WithDescription(reason != null
+            ? $"**{target.Username} kicked** | {reason}"
+            : $"**{target.Username} kicked**");
+        eb2.WithFooter($"{target.Id}");
+        eb2.WithColor(255, 0, 0);
+
+        await FollowupAsync(embed: eb2.Build());
+    }
+    
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("unban","Unban a user from this server")]
+    public async Task Unban(IUser target, string? reason = null)
+    {
+        await DeferAsync();
+        var ban = await Context.Guild.GetBanAsync(target);
+
+        if (ban == null)
+        {
+            await FollowupAsync($"Doesn't look like {target.Username} is banned?");
+            return;
+        }
+        
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id,target.Id, ModLog.ModAction.Unban, reason);
+        await _data.SaveChangesAsync();
+        
+        var dms = await target.CreateDMChannelAsync();
+        if (dms != null)
+        {
+            var eb = new EmbedBuilder();
+            eb.WithTitle($"You have been unbanned from {Context.Guild.Name}");
+            if (reason != null) eb.WithDescription(reason);
+            eb.WithColor(0,255,0);
+            await dms.SendMessageAsync(embed: eb.Build());
+        }
+        
+        await Context.Guild.RemoveBanAsync(target);
+        var eb2 = new EmbedBuilder();
+        eb2.WithDescription(reason != null
+            ? $"**{target.Username} unbanned** | {reason}"
+            : $"**{target.Username} unbanned**");
+        eb2.WithFooter($"{target.Id}");
+        eb2.WithColor(0, 255, 0);
+
+        await FollowupAsync(embed: eb2.Build());
+    }
+    
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("unmute","Unmute a user")]
+    public async Task Unmute(IGuildUser target, string? reason = null)
+    {
+        await DeferAsync();
+
+        if (target.TimedOutUntil == null || target.TimedOutUntil < DateTimeOffset.Now)
+        {
+            await FollowupAsync($"Doesn't look like {target.Username} is muted?");
+            return;
+        }
+
+        await target.RemoveTimeOutAsync();
+        await _data.AddModlog(Context.User,target, ModLog.ModAction.Unmute, reason);
+        await _data.SaveChangesAsync();
+        
+        var eb2 = new EmbedBuilder();
+        eb2.WithDescription(reason != null
+            ? $"**{target.Username} unmuted** | {reason}"
+            : $"**{target.Username} unmuted**");
+        eb2.WithFooter($"{target.Id}");
+        eb2.WithColor(0, 255, 0);
+        
+        await FollowupAsync(target.Mention,embed: eb2.Build());
+    }
+    
+    [RequireUserPermission(GuildPermission.ModerateMembers)]
+    [SlashCommand("mute","Unmute a user")]
+    public async Task Mute(IGuildUser target, float time, string? reason = null, Unit unit = Unit.Minutes)
+    {
+        await DeferAsync();
+
+        if (target.GuildPermissions.ModerateMembers)
+        {
+            await FollowupAsync("Can't mute moderators");
+            return;
+        }
+
+        TimeSpan duration;
+        string ustring;
+        switch (unit)
+        {
+            case Unit.Minutes:
+                duration = TimeSpan.FromMinutes(time);
+                ustring = "minutes";
+                break;
+            case Unit.Hours:
+                duration = TimeSpan.FromHours(time);
+                ustring = "hours";
+                break;
+            case Unit.Days:
+                duration = TimeSpan.FromDays(time);
+                ustring = "days";
+                break;
+            default:
+                duration = TimeSpan.FromMinutes(time);
+                ustring = "minutes";
+                break;
+        }
+
+        if (duration > TimeSpan.FromDays(14))
+        {
+            await FollowupAsync("Can't mute for longer than 14 days (Discord API limitation 🙄)");
+            return;
+        }
+
+        await target.SetTimeOutAsync(duration);
+        
+        await _data.AddModlog(Context.User,target, ModLog.ModAction.Mute, $"{duration.TotalMinutes:n0}m {reason}");
+        await _data.SaveChangesAsync();
+        
+        var eb2 = new EmbedBuilder();
+        eb2.WithDescription(reason != null
+            ? $"**{target.Username} muted for {time:n0} {ustring}** | {reason}"
+            : $"**{target.Username} muted for {time:n0} {ustring}**");
+        eb2.WithFooter($"{target.Id}");
+        eb2.WithColor(255, 0, 0);
+        
+        await FollowupAsync(target.Mention,embed: eb2.Build());
+    }
+
+    public enum Unit
+    {
+        Minutes,
+        Hours,
+        Days
     }
 
 

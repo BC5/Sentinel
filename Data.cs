@@ -21,6 +21,7 @@ public class Data : DbContext
     public DbSet<OCREntry> OcrEntries { get; set; }
     public DbSet<ElectionBallot> Ballots { get; set; }
     public DbSet<SocialCreditEntry> SocialCreditLog { get; set; }
+    public DbSet<ModLog> ModLogs { get; set; }
 
     [NotMapped] public string SQLitePath { get; } = "";
     [NotMapped] private ServerVersion? _sqlVersion = null;
@@ -247,7 +248,7 @@ public class Data : DbContext
         }
         else if(!opt.IsConfigured)
         {
-            string connstring = "server=localhost;user=sentinel;password=1984;database=sentinel";
+            string connstring = "server=10.0.0.7;user=sentinel;password=REDACTED;database=sentinel";
             var v = ServerVersion.AutoDetect(connstring);
             opt.UseMySql(connstring, v);
         }
@@ -350,8 +351,55 @@ public class Data : DbContext
             await SaveChangesAsync();
         }
     }
+
+    public Task AddModlog(IUser mod, IGuildUser user, ModLog.ModAction action, string? reason = null)
+    {
+        return AddModlog(user.GuildId, mod.Id, user.Id, action, reason);
+    }
+    
+    public async Task AddModlog(ulong server, ulong mod, ulong user, ModLog.ModAction action, string? reason = null)
+    {
+        await ModLogs.AddAsync(new ModLog()
+        {
+            ServerId = server,
+            ModId = mod,
+            UserId = user,
+            Reason = reason,
+            Action = action
+        });
+    }
     
 }
+
+[Index(nameof(ServerId),nameof(UserId))]
+public class ModLog
+{
+    [Key]
+    public int ModerationId { get; set; }
+    public ulong ServerId { get; set; }
+    public ulong UserId { get; set; }
+    public ulong ModId { get; set; }
+    public ModAction Action { get; set; }
+    
+    public string? Reason { get; set; }
+    
+    public enum ModAction
+    {
+        Ban,
+        Unban,
+        Kick,
+        Mute,
+        Unmute,
+        Warn,
+        Detain,
+        Release,
+        Verify
+    }
+    
+}
+
+
+
 
 public class ServerUser
 {

@@ -106,6 +106,7 @@ public class OnboardingModule : InteractionModuleBase
                 var su = await _data.GetServerUser(u);
                 if (!su.Verified)
                 {
+                    await _data.AddModlog(Context.Guild.Id,Context.User.Id,su.UserSnowflake, ModLog.ModAction.Verify,$"Mass Verify {role.Name}");
                     su.Verified = true;
                     verifications++;
                 }
@@ -135,6 +136,7 @@ public class OnboardingModule : InteractionModuleBase
         var usr = await _data.GetServerUser(uid, Context.Guild.Id);
         usr.Verified = true;
         _data.Entry(usr).Property(x => x.Verified).IsModified = true;
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id,uid, ModLog.ModAction.Verify, "Onboarding");
         await _data.SaveChangesAsync();
         var user = await Context.Guild.GetUserAsync(uid);
         await user.AddRolesAsync(srv.DeserialiseRoles());
@@ -160,7 +162,7 @@ public class OnboardingModule : InteractionModuleBase
         var srv = await _data.GetServerConfig(Context.Guild.Id);
         var usr = await _data.GetServerUser(uid, Context.Guild.Id);
         var user = await Context.Guild.GetUserAsync(uid);
-
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id,uid, ModLog.ModAction.Detain, "Onboarding");
         await _detention.ModifySentence(user, usr, srv, TimeSpan.FromDays(90));
         await _data.SaveChangesAsync();
         if (srv.IdiotChannel != null)
@@ -181,7 +183,8 @@ public class OnboardingModule : InteractionModuleBase
             await RespondAsync("This button is for moderators.", ephemeral: true);
             return;
         }
-        
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id,uid, ModLog.ModAction.Kick, "Onboarding");
+        await _data.SaveChangesAsync();
         var user = await Context.Guild.GetUserAsync(uid);
         await user.KickAsync();
         await RespondAsync($"Kicked {user.Username}");
@@ -195,6 +198,7 @@ public class OnboardingModule : InteractionModuleBase
         var usr = await _data.GetServerUser(user.Id,Context.Guild.Id);
         if (set == null) usr.Verified = !usr.Verified;
         else usr.Verified = set.Value;
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id,user.Id, ModLog.ModAction.Verify);
         await _data.SaveChangesAsync();
         await RespondAsync($"Verification {(usr.Verified ? "enabled":"disabled")} for {user.Mention}");
     }
