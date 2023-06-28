@@ -4,6 +4,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using Pomelo.EntityFrameworkCore.MySql.ValueGeneration.Internal;
 
 namespace Sentinel;
 
@@ -122,7 +123,6 @@ public class OnboardingModule : InteractionModuleBase
     }
     
     
-    [RequireUserPermission(GuildPermission.ModerateMembers)]
     [ComponentInteraction("sentinel-verify-*", ignoreGroupNames: true)]
     public async Task Verify(ulong uid)
     {
@@ -147,9 +147,11 @@ public class OnboardingModule : InteractionModuleBase
         }
         await _data.SaveChangesAsync();
         await RespondAsync($"Approved {user.Username}");
+        
+        var msg = (SocketUserMessage) ((IComponentInteraction) Context.Interaction).Message;
+        await msg.ModifyAsync(x => x.Components = GetButtons(0,true));
     }
     
-    [RequireUserPermission(GuildPermission.ModerateMembers)]
     [ComponentInteraction("sentinel-detain-*", ignoreGroupNames: true)]
     public async Task Detain(ulong uid)
     {
@@ -172,9 +174,11 @@ public class OnboardingModule : InteractionModuleBase
         }
         await _data.SaveChangesAsync();
         await RespondAsync($"Detained {user.Username}");
+        
+        var msg = (SocketUserMessage) ((IComponentInteraction) Context.Interaction).Message;
+        await msg.ModifyAsync(x => x.Components = GetButtons(0,true));
     }
     
-    [RequireUserPermission(GuildPermission.ModerateMembers)]
     [ComponentInteraction("sentinel-kick-*", ignoreGroupNames: true)]
     public async Task Kick(ulong uid)
     {
@@ -188,6 +192,9 @@ public class OnboardingModule : InteractionModuleBase
         var user = await Context.Guild.GetUserAsync(uid);
         await user.KickAsync();
         await RespondAsync($"Kicked {user.Username}");
+        
+        var msg = (SocketUserMessage) ((IComponentInteraction) Context.Interaction).Message;
+        await msg.ModifyAsync(x => x.Components = GetButtons(0,true));
     }
 
     
@@ -280,12 +287,16 @@ public class OnboardingModule : InteractionModuleBase
         eb.WithTitle(returning ? $"Welcome back to {guild.Name}" : $"Welcome to {guild.Name}");
         eb.WithColor(0, 0, 255);
         eb.WithDescription(message);
+        await channel.SendMessageAsync(user.Mention,embed: eb.Build(), components: GetButtons(user.Id,false));
+    }
 
+    private static MessageComponent GetButtons(ulong uid, bool disabled)
+    {
         var buttons = new ComponentBuilder();
-        buttons.WithButton("Verify", $"sentinel-verify-{user.Id}", ButtonStyle.Success, Emoji.Parse("✅"));
-        buttons.WithButton("Detain", $"sentinel-detain-{user.Id}", ButtonStyle.Danger, Emoji.Parse("🔒"));
-        buttons.WithButton("Kick", $"sentinel-kick-{user.Id}", ButtonStyle.Danger, Emoji.Parse("🚪"));
-        await channel.SendMessageAsync(user.Mention,embed: eb.Build(), components: buttons.Build());
+        buttons.WithButton("Verify", $"sentinel-verify-{uid}", ButtonStyle.Success, Emoji.Parse("✅"),disabled: disabled);
+        buttons.WithButton("Detain", $"sentinel-detain-{uid}", ButtonStyle.Danger, Emoji.Parse("🔒"),disabled: disabled);
+        buttons.WithButton("Kick", $"sentinel-kick-{uid}", ButtonStyle.Danger, Emoji.Parse("🚪"),disabled: disabled);
+        return buttons.Build();
     }
 
     public static async Task WelcomeBack(ITextChannel channel, IUser user)
