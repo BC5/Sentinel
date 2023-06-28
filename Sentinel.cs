@@ -354,6 +354,36 @@ public class Sentinel
                     await lc.SendMessageAsync(embed: eb.Build());
                 }
             }
+
+            if (srv.ArrivalsChannel != null)
+            {
+                var ac = guild.GetTextChannel(srv.ArrivalsChannel.Value);
+                if (ac != null)
+                {
+                    var msgs = await ac.GetMessagesAsync(15).ToListAsync();
+
+                    IMessage? welcome = null;
+                    
+                    foreach (var msgc in msgs)
+                    {
+                        foreach (var m in msgc)
+                        {
+                            if (m.Author.Id == _discord.CurrentUser.Id && m.Content == user.Mention)
+                            {
+                                welcome = m;
+                                break;
+                            }
+                        }
+                        if (welcome != null) break;
+                    }
+
+                    if (welcome is IUserMessage ium)
+                    {
+                        await ium.ModifyAsync(x => x.Components = OnboardingModule.GetButtons(user.Id, true));
+                    }
+                }
+            }
+            
         }
     }
 

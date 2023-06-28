@@ -290,7 +290,7 @@ public class OnboardingModule : InteractionModuleBase
         await channel.SendMessageAsync(user.Mention,embed: eb.Build(), components: GetButtons(user.Id,false));
     }
 
-    private static MessageComponent GetButtons(ulong uid, bool disabled)
+    public static MessageComponent GetButtons(ulong uid, bool disabled)
     {
         var buttons = new ComponentBuilder();
         buttons.WithButton("Verify", $"sentinel-verify-{uid}", ButtonStyle.Success, Emoji.Parse("✅"),disabled: disabled);
