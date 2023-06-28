@@ -26,6 +26,7 @@ public class Config
     public List<ProcedureScheduler.ScheduledProcedure> ProcedureSchedule { get; set; } = new();
 
     public SQLServer Database { get; set; } = new();
+    public List<ulong> DeleteLogExemptIds { get; set; } = new();
     
 
     public List<SlotsEmote> SlotsEmotes { get; set; } = new List<SlotsEmote>() {

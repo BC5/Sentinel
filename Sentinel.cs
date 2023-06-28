@@ -436,11 +436,15 @@ public class Sentinel
                     }
                     else
                     {
-                        var embed = new EmbedBuilder();
-                        embed.WithDescription($"**Message Deleted by <@{m.AuthorId}> in <#{m.ChannelId}>**\n{m.Content}");
-                        embed.WithColor(Color.Red);
-                        embed.WithFooter($"A: {m.AuthorId} M: {m.MessageId}");
-                        await logChannel.SendMessageAsync(embed: embed.Build());
+                        if (!_config.DeleteLogExemptIds.Contains(m.AuthorId))
+                        {
+                            var embed = new EmbedBuilder();
+                            embed.WithDescription(
+                                $"**Message Deleted by <@{m.AuthorId}> in <#{m.ChannelId}>**\n{m.Content}");
+                            embed.WithColor(Color.Red);
+                            embed.WithFooter($"A: {m.AuthorId} M: {m.MessageId}");
+                            await logChannel.SendMessageAsync(embed: embed.Build());
+                        }
                     }
                 }
             }
