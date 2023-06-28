@@ -268,6 +268,7 @@ public class Sentinel
         srv.AddSingleton(_textcat);
         srv.AddSingleton(_random);
         srv.AddSingleton(_log);
+        srv.AddSingleton(_messageManager);
         
         //add dbcontext to dependency inj.
         srv.AddDbContext<Data>(o => o.UseMySql(_config.Database.GetConnectionString(), _dbV));
@@ -291,6 +292,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(SocialCreditCommands), _services);
         await _interactions.AddModuleAsync(typeof(LeaderboardCommands), _services);
         await _interactions.AddModuleAsync(typeof(OnboardingModule), _services);
+        await _interactions.AddModuleAsync(typeof(PurgeCommands), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //Hook interactions events
@@ -634,7 +636,7 @@ public class Sentinel
             pconf.LastPurge = DateTimeOffset.Now;
             ITextChannel channel = guild.GetTextChannel(pconf.ChannelID);
 
-            List<ulong> purge = await _messageManager.GetMessagesToPurge(guild.Id, channel.Id);
+            List<ulong> purge = await _messageManager.GetMessagesToPurge(channel.Id);
             //Deduplicate
             purge = purge.Distinct().ToList();
             

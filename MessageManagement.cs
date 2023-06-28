@@ -85,28 +85,47 @@ public class MessageManagement
         }
     }
 
-    public async Task<List<ulong>> GetMessagesToPurge(ulong guild, ulong channel)
+    public async Task<List<ulong>> GetMessagesToPurge(ulong channel, ulong? before = null, ulong? after = null)
     {
         using (var log = GetLogDbContext())
         {
-            ulong before = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(7));
-            ulong after = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(13.9));
-            
-            /*
-            var msgs = await log.MessageLog
-                .Where(x => x.ServerId == guild && x.ChannelId == channel && x.MessageId < before && x.MessageId > after)
-                .ToListAsync();
-            */
-            
-            var msgs = await log.MessageLog.FromSql(
-                $"SELECT * FROM MessageLog WHERE ServerId = {guild} AND ChannelId = {channel} AND MessageId BETWEEN {after} AND {before}")
-                .ToListAsync();
-            
-            //WHERE ServerId = 1019326226713817138 AND ChannelId = 1117577557810892880 AND MessageId BETWEEN 1117980257174167604 AND 1117981435945549824
-            
-            
+            if(before == null) before = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(7));
+            if(after == null) after = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now - TimeSpan.FromDays(13.9));
+            List<Logs.Message> msgs = await GetMessagesBetween(log, channel, after.Value, before.Value);
             return msgs.Select(x => x.MessageId).ToList();
         }
+    }
+
+    public async Task<List<ulong>> GetChannelLastMessages(ulong channel, int count)
+    {
+        await using (var log = GetLogDbContext())
+        {
+            /*
+            var x = await log.MessageLog.Where(x => x.ChannelId == channel && x.Deleted == false && x.Removed == false)
+                .OrderByDescending(x => x.MessageId).Take(count)
+                .Select(x => x.MessageId).ToListAsync();
+            */
+
+            var y = await log.MessageLog
+                .FromSql($"SELECT * FROM MessageLog WHERE ChannelId = {channel} AND Deleted = false AND Removed = false ORDER BY MessageId DESC LIMIT {count}")
+                .Select(x => x.MessageId).ToListAsync();
+            return y;
+        }
+    }
+
+    private Task<List<Logs.Message>> GetMessagesBetween(ulong channel, ulong after, ulong before)
+    {
+        using (var log = GetLogDbContext())
+        {
+            return GetMessagesBetween(log, channel, after, before);
+        }
+    }
+    
+    private async Task<List<Logs.Message>> GetMessagesBetween(Logs log, ulong channel, ulong after, ulong before)
+    {
+       return await log.MessageLog.FromSql(
+                $"SELECT * FROM MessageLog WHERE ChannelId = {channel} AND MessageId BETWEEN {after} AND {before}")
+            .ToListAsync();
     }
 
     private Logs GetLogDbContext()
