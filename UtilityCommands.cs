@@ -312,6 +312,37 @@ public class UtilityCommands : InteractionModuleBase
         }
     }
 
+    [SlashCommand("roleinfo","Get info about a role")]
+    public async Task RoleInfo(IRole role, bool ephemeral = false)
+    {
+        await DeferAsync(ephemeral: ephemeral);
+        var users = await Context.Guild.GetUsersAsync();
+        var roleusers = users.Where(u => u.RoleIds.Contains(role.Id)).ToList();
+
+        var eb = new EmbedBuilder();
+        eb.WithTitle(role.Name);
+        eb.WithDescription(role.Mention);
+        switch (roleusers.Count)
+        {
+            case > 5:
+                eb.AddField($"Users",$"{roleusers.Count}");
+                break;
+            case 0:
+                eb.AddField($"Users","None");
+                break;
+            default:
+                string umentions = "";
+                foreach (var u in roleusers)
+                {
+                    umentions = umentions + $"{u.Mention} ";
+                }
+                eb.AddField($"Users",$"{roleusers.Count}: {umentions}");
+                break;
+        }
+        eb.WithFooter($"ID: {role.Id}");
+        await FollowupAsync(embed: eb.Build());
+    }
+
     [MessageCommand("FactCheck")]
     public async Task FactCheck(IMessage msg)
     {
