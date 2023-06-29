@@ -293,6 +293,7 @@ public class Sentinel
         await _interactions.AddModuleAsync(typeof(LeaderboardCommands), _services);
         await _interactions.AddModuleAsync(typeof(OnboardingModule), _services);
         await _interactions.AddModuleAsync(typeof(PurgeCommands), _services);
+        await _interactions.AddModuleAsync(typeof(RoleTicker), _services);
         //await _interactions.AddModuleAsync(typeof(AudioCommands), _services);
         
         //Hook interactions events
@@ -591,6 +592,30 @@ public class Sentinel
             string nBefore = before.Value.Nickname;
             string nAfter = after.Nickname;
 
+            foreach(Config.RoleTicker rt in _config.RoleTickers)
+            {
+                if (rt.GuildId == after.Guild.Id)
+                {
+                    var guild = after.Guild;
+                    var role = guild.GetRole(rt.RoleId);
+                    if (before.Value.Roles.Contains(role) ^ after.Roles.Contains(role))
+                    {
+                        var channel = guild.GetTextChannel(rt.ChannelId);
+                        var msg = (IUserMessage) await channel.GetMessageAsync(rt.MessageId);
+                        var users = await guild.GetUsersAsync().ToListAsync();
+                        int rolecount = 0;
+                        foreach (var uc in users)
+                        {
+                            foreach (var u in uc)
+                            {
+                                if (u.RoleIds.Contains(rt.RoleId)) rolecount++;
+                            }
+                        }
+                        await msg.ModifyAsync(x => x.Content = $"{role.Mention} - {rolecount:n0}");
+                    }
+                }
+            }
+            
             //await AntiSierraAktion(before, after);
             //await ProtectRoles(before, after,1019250206212116571);
         

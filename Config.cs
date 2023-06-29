@@ -27,6 +27,7 @@ public class Config
 
     public SQLServer Database { get; set; } = new();
     public List<ulong> DeleteLogExemptIds { get; set; } = new();
+    public List<RoleTicker> RoleTickers { get; set; } = new();
     
 
     public List<SlotsEmote> SlotsEmotes { get; set; } = new List<SlotsEmote>() {
@@ -37,6 +38,14 @@ public class Config
         new SlotsEmote("🍉",10),new SlotsEmote("🧲",1),
         new SlotsEmote("🎰",10),new SlotsEmote("🍆",1)
     };
+
+    public class RoleTicker
+    {
+        public ulong RoleId { get; set; }
+        public ulong MessageId { get; set; }
+        public ulong GuildId { get; set; }
+        public ulong ChannelId { get; set; }
+    }
 
     public class SlotsEmote
     {
