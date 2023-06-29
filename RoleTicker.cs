@@ -12,10 +12,10 @@ public class RoleTicker : InteractionModuleBase
     private Sentinel _core;
     private Config _config;
 
-    public RoleTicker(Sentinel core, Config config)
+    public RoleTicker(Sentinel core)
     {
         _core = core;
-        _config = config;
+        _config = core.GetConfig();
     }
     
     [SlashCommand("new", "Add a role ticker")]
