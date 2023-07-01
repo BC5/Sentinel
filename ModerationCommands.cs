@@ -301,29 +301,30 @@ public class ModerationCommands : InteractionModuleBase
 
     [RequireUserPermission(GuildPermission.ModerateMembers)]
     [SlashCommand("ban","Ban a user from this server")]
-    public async Task Ban(IGuildUser target, string? reason = null)
+    public async Task Ban(IUser target, string? reason = null)
     {
         await DeferAsync();
-        if (target.GuildPermissions.ModerateMembers)
+        if (target is IGuildUser igu && igu.GuildPermissions.ModerateMembers)
         {
             await FollowupAsync("Can't ban moderators");
             return;
         }
 
-        await _data.AddModlog(Context.User, target, ModLog.ModAction.Ban, reason);
+        await _data.AddModlog(Context.Guild.Id,Context.User.Id, target.Id, ModLog.ModAction.Ban, reason);
         await _data.SaveChangesAsync();
         
         var dms = await target.CreateDMChannelAsync();
         if (dms != null)
         {
             var eb = new EmbedBuilder();
-            eb.WithTitle($"You have been banned from {target.Guild.Name}");
+            eb.WithTitle($"You have been banned from {Context.Guild.Name}");
             if (reason != null) eb.WithDescription(reason);
             eb.WithColor(255,0,0);
             await dms.SendMessageAsync(embed: eb.Build());
         }
-        await target.BanAsync();
-        
+
+        await Context.Guild.AddBanAsync(target, reason: $"{Context.User.Username}: {reason}");
+
         var eb2 = new EmbedBuilder();
         eb2.WithDescription(reason != null
             ? $"**{target.Username} banned** | {reason}"
