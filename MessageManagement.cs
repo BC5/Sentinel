@@ -113,6 +113,13 @@ public class MessageManagement
         }
     }
 
+    public async Task<List<ulong>> GetChannelMessagesBetween(ulong channel, ulong after, ulong? before)
+    {
+        if (before == null) before = SnowflakeUtils.ToSnowflake(DateTimeOffset.Now);
+        List<Logs.Message> msgs = await GetMessagesBetween(channel, after, before.Value);
+        return msgs.Select(x => x.MessageId).ToList();
+    }
+
     private Task<List<Logs.Message>> GetMessagesBetween(ulong channel, ulong after, ulong before)
     {
         using (var log = GetLogDbContext())
@@ -124,7 +131,7 @@ public class MessageManagement
     private async Task<List<Logs.Message>> GetMessagesBetween(Logs log, ulong channel, ulong after, ulong before)
     {
        return await log.MessageLog.FromSql(
-                $"SELECT * FROM MessageLog WHERE ChannelId = {channel} AND MessageId BETWEEN {after} AND {before}")
+                $"SELECT * FROM MessageLog WHERE ChannelId = {channel} AND Deleted = false AND Removed = false AND MessageId BETWEEN {after} AND {before}")
             .ToListAsync();
     }
 
